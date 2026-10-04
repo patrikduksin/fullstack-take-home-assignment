@@ -21,3 +21,13 @@ Core-specific skill sources live in root `skills/`. Read the relevant skill:
 - [uncomplect](skills/uncomplect/SKILL.md) for architecture review and simplification.
 
 Edit the source files in `skills/`, then run `pnpm skills:install`. That command uses the Skills CLI to install from the local directory into `.agents/skills`, which is generated and ignored. Run it after cloning to enable native agent discovery. `skills-lock.json` tracks the local source and hashes. These are maintained Core adaptations; do not replace them with upstream copies during an update.
+
+## Agent skills
+
+### Issue tracker
+
+Issues and specs live in GitHub Issues for patrikduksin/fullstack-take-home-assignment. See `docs/agents/issue-tracker.md`.
+
+### Domain docs
+
+Use a single root glossary and shared ADR directory. See `docs/agents/domain.md`.
