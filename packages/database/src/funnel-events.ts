@@ -3,7 +3,7 @@ import type { FunnelEvent } from "@core/core/contracts";
 import { canonicalEvent, FunnelEvents } from "@core/core/funnel/events";
 import type * as Cloudflare from "alchemy/Cloudflare";
 import * as RuntimeContext from "alchemy/RuntimeContext";
-import { Effect, Schema } from "effect";
+import { Cause, Effect, Option, Schema } from "effect";
 
 const eventJson =
   "json_object('eventId', event_id, 'type', type, 'sessionId', session_id, 'clientTimestamp', client_timestamp, 'serverTimestamp', server_timestamp, 'version', version, 'variant', variant, 'stepId', step_id, 'utm', json(utm), 'properties', json(properties))";
@@ -13,14 +13,32 @@ const decodeStoredEvent = Schema.decodeEffect(
 );
 
 const stored = <A, E>(
+  operation: string,
   effect: Effect.Effect<A, E, RuntimeContext.RuntimeContext>
 ) =>
   effect.pipe(
-    Effect.catchCause(() =>
-      Effect.fail(
-        new FunnelError({
-          message: "Could not persist funnel events. Please retry the batch.",
-        })
+    Effect.catchCause((cause) =>
+      Effect.logError({
+        operation,
+        providerErrors: Cause.prettyErrors(cause).map((error) => ({
+          code: Schema.decodeUnknownOption(
+            Schema.Struct({ code: Schema.String })
+          )(error).pipe(
+            Option.map((provider) => provider.code),
+            Option.getOrUndefined
+          ),
+          message: error.message.slice(0, 1000),
+          name: error.name,
+        })),
+      }).pipe(
+        Effect.andThen(
+          Effect.fail(
+            new FunnelError({
+              message:
+                "Could not persist funnel events. Please retry the batch.",
+            })
+          )
+        )
       )
     ),
     Effect.provide(RuntimeContext.RuntimeContext.phantom)
@@ -43,6 +61,7 @@ export const d1FunnelEvents = (
     event: FunnelEvent
   ) {
     const inserted = yield* stored(
+      "insert-funnel-event",
       database
         .prepare(
           `INSERT INTO funnel_events(event_id, type, session_id, client_timestamp, version, variant, step_id, utm, properties) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(event_id) DO NOTHING RETURNING ${eventJson} AS event`
@@ -72,6 +91,7 @@ export const d1FunnelEvents = (
     }
 
     const original = yield* stored(
+      "load-original-funnel-event",
       database
         .prepare(
           `SELECT ${eventJson} AS event FROM funnel_events WHERE event_id = ?`
@@ -108,6 +128,7 @@ export const d1FunnelEvents = (
     id: string
   ) {
     const rows = yield* stored(
+      "load-session-funnel-events",
       database
         .prepare(
           `SELECT ${eventJson} AS event FROM funnel_events WHERE session_id = ? ORDER BY server_timestamp, event_id`
