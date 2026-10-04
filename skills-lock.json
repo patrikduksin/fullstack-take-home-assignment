@@ -16,10 +16,10 @@
       "sourceType": "local",
       "computedHash": "a1b286927b178ece610f7979d2be004b81c95e4bd623f1bed7c8bc6c334924d0"
     },
-    "setup-core": {
+    "setup": {
       "source": "./skills",
       "sourceType": "local",
-      "computedHash": "cd6286b2889a4bef695a36370b3efc7e33cf48b40a85b421bbd5c4f660caf711"
+      "computedHash": "0baffe08ca45929755d92e9d6d61abc775fc01ba2a1f0dbdb71b893821a07b4b"
     },
     "uncomplect": {
       "source": "./skills",

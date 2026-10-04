@@ -10,4 +10,4 @@ The upstream MIT license remains in LICENSE. Vendored anti-slop attribution rema
 
 Core skills in skills/ are adapted from the upstream add-a-capability, add-a-lifecycle-machine, learn-alchemy, and uncomplect skills at the commit above. They describe this project's current packages, interfaces, infrastructure, and verification commands. The upstream lifecycle demo template was replaced with a domain-oriented test guide. Skills CLI installs these maintained sources locally via pnpm skills:install; skills-lock.json records local source hashes. Reference-repo maintenance and website skills are omitted.
 
-The setup-core skill was written for this project.
+The setup skill was written for this project.

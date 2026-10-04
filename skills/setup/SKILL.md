@@ -1,5 +1,5 @@
 ---
-name: setup-core
+name: setup
 description: Set up a fresh Core checkout for local development and verify the web, backend, and D1 work together.
 ---
 
