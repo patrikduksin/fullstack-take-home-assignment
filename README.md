@@ -4,7 +4,9 @@ A configuration-driven fictional trail and camp planning demo built with TanStac
 
 The assignment JSON files were not supplied. The files under `configurations/` are authored fictional replacements. They demonstrate the required behavior and do not represent booking, financial offers, or real customer data.
 
-Public website: [Funnel Runtime](https://core-corewebsite-assignment-demo-ggqzchgyxaih2whr.a-72c.workers.dev).
+Public website: [Funnel Runtime](https://tha2.app).
+
+The generated demo cohorts contain **120 sessions, 56 reaching results, and 40 CTA clickers**. Open the [Explore cohort](https://tha2.app/internal/analytics?campaign=traffic-1791106411327-20261004-explore) for 80 / 32 / 24, or the [Direct cohort](https://tha2.app/internal/analytics?campaign=traffic-1791106411327-20261004-direct) for 40 / 24 / 16. Browser verification sessions are also present in the unfiltered dashboard.
 
 Repository: [patrikduksin/fullstack-take-home-assignment](https://github.com/patrikduksin/fullstack-take-home-assignment).
 
@@ -170,20 +172,26 @@ Run this command from `apps/web`. The runner requires an output directory inside
 
 This journey publishes a unique copy of the fictional fixture and rolls back once, preserving the old B session and new A/B sessions. It does not seed or delete the persistent traffic population. It must run after first-iteration acceptance.
 
-The [native GitHub stack](https://github.com/patrikduksin/fullstack-take-home-assignment/pull/12) is #19, ordered #12 → #13 → #16 → #15 → #18 → #17 → #21 → #20 → #30 → #31 → #29 → [#32](https://github.com/patrikduksin/fullstack-take-home-assignment/pull/32). Task PRs carry local API/browser evidence, artifact downloads, and UI screenshots. [Integration PR #14](https://github.com/patrikduksin/fullstack-take-home-assignment/pull/14) provides the combined change against `main`; it is separate from the per-task stack. The requested deliverable is reviewable PRs.
+The [native GitHub stack](https://github.com/patrikduksin/fullstack-take-home-assignment/pull/12) is #19, ordered #12 → #13 → #16 → #15 → #18 → #17 → #21 → #20 → #30 → #31 → #29 → [#32](https://github.com/patrikduksin/fullstack-take-home-assignment/pull/32). Task PRs carry local API/browser evidence, artifact downloads, and UI screenshots. [Integration PR #14](https://github.com/patrikduksin/fullstack-take-home-assignment/pull/14) provides the combined change against `main`; it is separate from the per-task stack. The task stack is merged into `main`; its PRs retain the implementation history and test evidence.
 
 The repository's Cloudflare Actions secrets are missing: `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN`. Local verification uses the working Cloudflare profile. The user accepted local evidence with this CI limitation; CI still runs the required tests. Local OAuth credentials are not transferred to GitHub. See the [observed CI failure](https://github.com/patrikduksin/fullstack-take-home-assignment/actions/runs/37179622508).
 
 ## Deployment and actual chronology
 
-Cloudflare Workers and D1 are the accepted runtime and storage for this exercise. Alchemy declares the infrastructure. Configure a Cloudflare profile with `pnpm exec alchemy profile edit --add Cloudflare`, then inspect the current plan before deployment:
+Cloudflare Workers and D1 are the accepted runtime and storage for this exercise. Alchemy declares the infrastructure. On a fresh machine, create the `tha2` Cloudflare profile, select the personal account that owns the domain, then inspect the plan before deployment:
 
 ```sh
-pnpm infra:plan --stage assignment-demo --detailed --no-input
-pnpm infra:deploy --stage assignment-demo --yes --no-input
+pnpm exec alchemy profile create tha2
+pnpm exec alchemy profile edit --config apps/infra/alchemy.run.ts --profile tha2 --add Cloudflare
+pnpm infra:plan --profile tha2 --stage tha2-demo --detailed --no-input
+pnpm infra:deploy --profile tha2 --stage tha2-demo --yes --no-input
 ```
 
-The persistent stage creates the public website, private backend Worker, D1, and required bindings. The backend has no public workers.dev origin; public API checks use the website. Keep the reported website URL and persistent records after smoke checks. Deployment is separate from local development.
+Run remote tests with `ALCHEMY_PROFILE=tha2 pnpm test` when using this profile.
+
+The `tha2` profile selects the personal Cloudflare account that owns `tha2.app`. The `tha2-demo` stage attaches that custom domain; local development and temporary test stages do not. Cloudflare manages its DNS record and TLS certificate. The persistent stage creates the public website, private backend Worker, D1, and required bindings. The backend has no public workers.dev origin; public API checks use the website. Keep the reported website URL and persistent records after smoke checks. Deployment is separate from local development.
+
+The following milestones describe the original `assignment-demo` acceptance.
 
 | Milestone                                   | Actual UTC time             |
 | ------------------------------------------- | --------------------------- |
@@ -198,9 +206,11 @@ The persistent stage creates the public website, private backend Worker, D1, and
 
 The complete local second-iteration checks passed at 2026-10-04 08:35:41 UTC. These times come from retained reports and activation history. Incremental commits and earlier command-line traffic milestones are not full first-iteration acceptance. The original 48-hour start was not provided, so it is not inferred from implementation activity.
 
-The persistent demonstration retained the generated 120-session population with 56 result-reaching sessions and 40 CTA clickers. Thirteen final public browser checks passed across health, funnel, event delivery, dashboard and second-iteration compatibility, with zero failed, flaky or skipped checks. Historical traffic counts remained unchanged after publication and rollback. The original B browser profile still resumed its original preparation screen, and both new A/B sessions retained the second version and its configured non-sensitive event.
+The original `assignment-demo` demonstration retained the generated 120-session population with 56 result-reaching sessions and 40 CTA clickers. Thirteen final public browser checks passed across health, funnel, event delivery, dashboard and second-iteration compatibility, with zero failed, flaky or skipped checks. Historical traffic counts remained unchanged after publication and rollback. The original B browser profile still resumed its original preparation screen, and both new A/B sessions retained the second version and its configured non-sensitive event.
 
 During public acceptance, a rollback POST outside the coordinated test run reactivated the camp version at 08:45:25 UTC. Native Worker logs confirmed the request; its caller is unknown. The compatibility precondition stopped before publication. One guarded, recorded restore returned to trail, then the complete compatibility journey passed. This demonstrates the documented unauthenticated operator scope: other visitors can change the active version. The failed precondition, request history, restoration and successful follow-up are retained as evidence.
+
+The current demo at `https://tha2.app` is a fresh deployment in the domain owner’s personal account. It was deployed at 2026-10-04 09:32:50 UTC. Traffic run `1791106411327-20261004` generated and replayed 120 sessions, verified independent reference counts and filters, and restored `trail-branches-v1`. Its fresh data replaces the old demo database as requested. The old account’s `assignment-demo` website, backend Worker, and database were destroyed at 2026-10-04 09:37:58 UTC after the new domain passed all six final public browser checks. The chronology above describes the original assignment acceptance; its attached evidence remains available. New domain verification, traffic output, browser reports, screenshots, and traces are in the [domain evidence archive](https://github.com/patrikduksin/fullstack-take-home-assignment/releases/download/funnel-runtime-evidence-2026-10-04/tha2-domain-evidence.zip). View the [populated dashboard screenshot](https://github.com/patrikduksin/fullstack-take-home-assignment/releases/download/funnel-runtime-evidence-2026-10-04/tha2-domain-dashboard.png) or [funnel screenshot](https://github.com/patrikduksin/fullstack-take-home-assignment/releases/download/funnel-runtime-evidence-2026-10-04/tha2-domain-welcome.png).
 
 ## Repository provenance
 
