@@ -1,5 +1,6 @@
-import { test } from "@e2e-dev/web";
 import { expect } from "e2e";
+
+import { test } from "./browser-ready.js";
 
 // @effect-diagnostics-next-line asyncFunction:off -- The e2e runner requires a Promise callback for browser fixtures.
 test("completes a configured funnel and restores drafts and accepted answers", async ({

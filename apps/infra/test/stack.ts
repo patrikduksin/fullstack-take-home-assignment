@@ -1,8 +1,12 @@
 import * as Cloudflare from "alchemy/Cloudflare";
 import * as Test from "alchemy/Test/Vitest";
-import { Effect, Random } from "effect";
+import { Data, Effect, Random, Schedule } from "effect";
 
 import Stack from "../alchemy.run.js";
+
+class DocumentNotReady extends Data.TaggedError("DocumentNotReady")<{
+  message: string;
+}> {}
 
 export const makeTestStack = () => {
   const suffix = Effect.runSync(
@@ -19,6 +23,29 @@ export const makeTestStack = () => {
   const stack = api.beforeAll(
     Effect.gen(function* readyStack() {
       const deployed = yield* api.deploy(Stack);
+
+      yield* Effect.gen(function* readyHomepage() {
+        // @effect-diagnostics-next-line anyUnknownInErrorContext:off -- Alchemy exposes transient readiness errors as unknown; bounded retries surface them as test defects.
+        const homepage = yield* Test.getWhenReady(`${deployed.websiteUrl}/`, {
+          times: 0,
+        });
+
+        const html = yield* homepage.text;
+
+        if (
+          homepage.status !== 200 ||
+          !html.includes("<title>Funnel Runtime</title>")
+        ) {
+          return yield* new DocumentNotReady({
+            message: "The deployed application document is not ready.",
+          });
+        }
+
+        return html;
+      }).pipe(
+        Effect.retry({ schedule: Schedule.spaced("1 second"), times: 60 }),
+        Effect.orDie
+      );
 
       // @effect-diagnostics-next-line anyUnknownInErrorContext:off -- Alchemy readiness failures become test defects before tests begin.
       const health = yield* Test.getWhenReady(

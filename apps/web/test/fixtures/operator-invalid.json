@@ -1,0 +1,6 @@
+{
+  "id": "operator-invalid-v1",
+  "name": "Invalid fixture",
+  "start": "missing",
+  "steps": []
+}
