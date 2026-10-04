@@ -34,7 +34,7 @@ Effect 4 owns services, errors, configuration, and resource lifetimes. XState 6 
 
 The home page runs a fictional trail-planning funnel from backend JSON. Sessions pin an immutable configuration version and retain accepted answers and navigation in D1. Unsubmitted edits remain in the same browser through reload and reopening. The diagnostic page at `/health` checks the backend and database separately from the visitor flow.
 
-`configurations/linear-v1.json` is an authored fixture because the original assignment JSON files were not supplied.
+`configurations/iteration-one/trail.json` and `configurations/iteration-one/camp.json` are the authored first-iteration configurations because the original assignment JSON files were not supplied. Each includes at least six screens, conditional routing, and A/B content. The linear and variant fixtures record the earlier incremental deliveries.
 
 ## Interfaces
 

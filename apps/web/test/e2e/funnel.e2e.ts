@@ -16,9 +16,9 @@ test("completes a configured funnel and restores drafts and accepted answers", a
   await screen.getByRole("button", "Continue").tap();
   await expect(screen.getByRole("alert")).toContainText("Choose one option.");
   await app.screenshot("validation");
-  await screen.getByRole("radio", "Active hike").check();
+  await screen.getByRole("radio", "Gentle stroll").check();
   await browser.reload();
-  await expect(screen.getByRole("radio", "Active hike")).toBeChecked();
+  await expect(screen.getByRole("radio", "Gentle stroll")).toBeChecked();
   await screen.getByRole("button", "Continue").tap();
   await screen.getByRole("checkbox", "Forest").check();
   await screen.getByRole("checkbox", "Waterfalls").check();
@@ -123,4 +123,51 @@ test("rejects an invalid override and lets the reviewer choose a valid variant",
   await expect(
     screen.getByRole("heading", "Plan a fictional weekend trail")
   ).toBeVisible();
+});
+
+// @effect-diagnostics-next-line asyncFunction:off -- The e2e runner requires a Promise callback for browser fixtures.
+test("edits a conditional route and clears an abandoned question's answer and draft", async ({
+  app,
+  screen,
+}) => {
+  await app.open("/?variant=A");
+  await expect(screen.getByText("Step 1 of 6")).toBeVisible();
+  await screen.getByRole("button", "Continue").tap();
+  await screen.getByRole("radio", "Active hike").check();
+  await screen.getByRole("button", "Continue").tap();
+  await expect(
+    screen.getByRole("heading", "Choose your trail supplies")
+  ).toBeVisible();
+  await expect(screen.getByText("Step 3 of 7")).toBeVisible();
+  await app.screenshot("conditional-supplies");
+  await screen.getByRole("radio", "Hiking boots").check();
+  await screen.getByRole("button", "Continue").tap();
+  await screen.getByRole("button", "Back").tap();
+  await screen.getByRole("radio", "Walking shoes").check();
+  await screen.getByRole("button", "Back").tap();
+  await screen.getByRole("radio", "Gentle stroll").check();
+  await screen.getByRole("button", "Continue").tap();
+  await expect(
+    screen.getByRole("heading", "What would you like to see?")
+  ).toBeVisible();
+  await expect(screen.getByText("Step 3 of 6")).toBeVisible();
+  await app.screenshot("edited-shorter-route");
+  await screen.getByRole("button", "Back").tap();
+  await screen.getByRole("radio", "Active hike").check();
+  await screen.getByRole("button", "Continue").tap();
+  await expect(screen.getByRole("radio", "Walking shoes")).not.toBeChecked();
+  await expect(screen.getByRole("radio", "Hiking boots")).not.toBeChecked();
+  await app.screenshot("abandoned-answer-and-draft-cleared");
+  await screen.getByRole("radio", "Hiking boots").check();
+  await screen.getByRole("button", "Continue").tap();
+  await screen.getByRole("checkbox", "Forest").check();
+  await screen.getByRole("button", "Continue").tap();
+  await screen.getByRole("spinbutton", "How many hours do you have?").fill("3");
+  await screen.getByRole("button", "Continue").tap();
+  await screen.getByRole("button", "Continue").tap();
+  await expect(
+    screen.getByRole("heading", "Your sample trail plan is ready")
+  ).toBeVisible();
+  await expect(screen.getByText("Step 7 of 7")).toBeVisible();
+  await app.screenshot("conditional-route-result");
 });

@@ -30,14 +30,17 @@ test(
     });
     const url = `${websiteUrl}/api/sessions/${initial.session.id}`;
 
-    const advance = Effect.fnUntraced(function* advance(answer: Answer) {
+    const advance = Effect.fnUntraced(function* advance(
+      answer: Answer,
+      stepId: string
+    ) {
       return yield* HttpClient.post(`${url}/advance`, {
-        body: HttpBody.jsonUnsafe({ answer }),
+        body: HttpBody.jsonUnsafe({ answer, stepId }),
       });
     });
 
-    expect((yield* advance(null)).status).toBe(200);
-    expect((yield* advance("unlisted")).status).toBe(422);
+    expect((yield* advance(null, "welcome")).status).toBe(200);
+    expect((yield* advance("unlisted", "pace")).status).toBe(422);
 
     const afterInvalid = yield* HttpClient.get(url).pipe(
       Effect.flatMap((response) => response.json),
@@ -49,14 +52,18 @@ test(
       currentStep: "pace",
       history: ["welcome"],
     });
-    expect((yield* advance("active")).status).toBe(200);
-    expect((yield* advance([])).status).toBe(422);
-    expect((yield* advance(["forest", "forest"])).status).toBe(422);
-    expect((yield* advance(["forest", "water", "view"])).status).toBe(422);
-    expect((yield* advance(["forest", "water"])).status).toBe(200);
-    expect((yield* advance(9)).status).toBe(422);
-    expect((yield* advance(3)).status).toBe(200);
-    expect((yield* advance(null)).status).toBe(200);
+    expect((yield* advance("gentle", "pace")).status).toBe(200);
+    expect((yield* advance([], "interests")).status).toBe(422);
+    expect((yield* advance(["forest", "forest"], "interests")).status).toBe(
+      422
+    );
+    expect(
+      (yield* advance(["forest", "water", "view"], "interests")).status
+    ).toBe(422);
+    expect((yield* advance(["forest", "water"], "interests")).status).toBe(200);
+    expect((yield* advance(9, "hours")).status).toBe(422);
+    expect((yield* advance(3, "hours")).status).toBe(200);
+    expect((yield* advance(null, "prepare")).status).toBe(200);
 
     const completed = yield* HttpClient.get(url).pipe(
       Effect.flatMap((response) => response.json),
@@ -64,7 +71,7 @@ test(
     );
 
     expect(completed.session).toMatchObject({
-      answers: { hours: 3, interests: ["forest", "water"], pace: "active" },
+      answers: { hours: 3, interests: ["forest", "water"], pace: "gentle" },
       currentStep: "result",
       history: ["welcome", "pace", "interests", "hours", "prepare"],
       version: initial.session.version,
@@ -80,7 +87,7 @@ test(
     );
 
     expect(resumed.session).toMatchObject({
-      answers: { hours: 3, interests: ["forest", "water"], pace: "active" },
+      answers: { hours: 3, interests: ["forest", "water"], pace: "gentle" },
       currentStep: "prepare",
       history: ["welcome", "pace", "interests", "hours"],
     });
@@ -109,7 +116,7 @@ test(
     const url = `${websiteUrl}/api/sessions/${initial.session.id}`;
 
     const advanced = yield* HttpClient.post(`${url}/advance`, {
-      body: HttpBody.jsonUnsafe({ answer: null }),
+      body: HttpBody.jsonUnsafe({ answer: null, stepId: "welcome" }),
     });
 
     const next = yield* advanced.json.pipe(Effect.flatMap(decodeView));
@@ -171,6 +178,81 @@ test(
 
       expect(resumed).toEqual(initial);
     }
+  }),
+  { timeout: 60_000 }
+);
+
+test(
+  "editing a branch prunes abandoned answers and rejects unavailable submissions",
+  Effect.gen(function* editedRoute() {
+    const { websiteUrl } = yield* stack;
+
+    const initial = yield* HttpClient.post(`${websiteUrl}/api/sessions`, {
+      body: HttpBody.jsonUnsafe({ variant: "A" }),
+    }).pipe(
+      Effect.flatMap((response) => response.json),
+      Effect.flatMap(decodeView)
+    );
+
+    const url = `${websiteUrl}/api/sessions/${initial.session.id}`;
+
+    const advance = Effect.fnUntraced(function* advance(
+      stepId: string,
+      answer: Answer
+    ) {
+      const response = yield* HttpClient.post(`${url}/advance`, {
+        body: HttpBody.jsonUnsafe({ answer, stepId }),
+      });
+
+      expect(response.status).toBe(200);
+
+      return yield* response.json.pipe(Effect.flatMap(decodeView));
+    });
+
+    const back = Effect.fnUntraced(function* back() {
+      return yield* HttpClient.post(`${url}/back`, {
+        body: HttpBody.jsonUnsafe({}),
+      }).pipe(
+        Effect.flatMap((response) => response.json),
+        Effect.flatMap(decodeView)
+      );
+    });
+
+    expect(initial.route).toHaveLength(6);
+    yield* advance("welcome", null);
+    const branched = yield* advance("pace", "active");
+    expect(branched.route).toHaveLength(7);
+    expect(branched.session.routeRevision).toBe(1);
+    yield* advance("supplies", "boots");
+    yield* back();
+    yield* back();
+    const edited = yield* advance("pace", "gentle");
+    expect(edited.session).toMatchObject({
+      answers: { pace: "gentle" },
+      currentStep: "interests",
+      history: ["welcome", "pace"],
+      routeRevision: 2,
+    });
+    expect(edited.session.answers.supplies).toBeUndefined();
+    expect(edited.route).not.toContain("supplies");
+
+    const unavailable = yield* HttpClient.post(`${url}/advance`, {
+      body: HttpBody.jsonUnsafe({ answer: "boots", stepId: "supplies" }),
+    });
+
+    expect(unavailable.status).toBe(422);
+
+    const unchanged = yield* HttpClient.get(url).pipe(
+      Effect.flatMap((response) => response.json),
+      Effect.flatMap(decodeView)
+    );
+
+    expect(unchanged.session).toEqual(edited.session);
+    yield* back();
+    const restoredBranch = yield* advance("pace", "active");
+    expect(restoredBranch.session.currentStep).toBe("supplies");
+    expect(restoredBranch.session.answers.supplies).toBeUndefined();
+    expect(restoredBranch.session.routeRevision).toBe(3);
   }),
   { timeout: 60_000 }
 );
