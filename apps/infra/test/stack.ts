@@ -27,10 +27,12 @@ export const makeTestStack = () => {
     Random.nextIntBetween(0, Number.MAX_SAFE_INTEGER)
   ).toString(36);
 
+  const stage = `${process.env.ALCHEMY_TEST_STAGE ?? "test"}-${suffix}`;
+
   const api = Test.make({
     dev: false,
     providers: Cloudflare.providers(),
-    stage: `${process.env.ALCHEMY_TEST_STAGE ?? "test"}-${suffix}`,
+    stage,
     state: Cloudflare.state(),
   });
 
@@ -136,5 +138,5 @@ export const makeTestStack = () => {
 
   api.afterAll(api.destroy(Stack), { timeout: 600_000 });
 
-  return { stack, test: api.test };
+  return { stack, stage, test: api.test };
 };

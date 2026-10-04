@@ -11,7 +11,7 @@
     "typecheck": "pnpm -r --if-present run typecheck && pnpm typecheck-scripts",
     "lint": "ultracite check && oxfmt --check .",
     "fix": "ultracite fix && oxfmt .",
-    "test": "pnpm test:unit && pnpm test:integration && pnpm test:e2e",
+    "test": "pnpm test:unit && bash scripts/test-remote.sh",
     "infra:plan": "alchemy plan --config apps/infra/alchemy.run.ts",
     "infra:deploy": "alchemy deploy --config apps/infra/alchemy.run.ts",
     "prepare": "effect-tsgo patch && lefthook install",
