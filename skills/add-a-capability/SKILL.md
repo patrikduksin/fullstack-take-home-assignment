@@ -29,6 +29,6 @@ Browser clients in `apps/web/src/client` import contracts from `@core/core/contr
 
 ## Verification
 
-Use `@effect/vitest` with `it.effect` or `it.layer` to test successful output and expected failures with service fakes. Exercise approval behavior when relevant. Use `Schema.encodeEffect` to check encoded results and `Effect.flip` for expected errors. Do not call `Effect.run*` or construct a managed runtime inside Effect tests.
+Read `skills/testing/SKILL.md` from the repository root. Exercise approval behavior when relevant. Use `Schema.encodeEffect` to check encoded results and `Effect.flip` for expected errors. Do not call `Effect.run*` or construct a managed runtime inside Effect tests.
 
-Add projection tests when transport behavior changes. For a new public action, verify its relevant interfaces against root `pnpm dev`, which starts web, backend, and local D1 through Alchemy. Run `pnpm check`, `pnpm test`, and `pnpm build`; keep the existing diagnostics, import boundaries, and hooks intact.
+Add projection tests when transport behavior changes. For a new public action, verify its relevant interfaces against an Alchemy-managed test stack, destroyed in `afterAll`. Add `e2e` tests only for browser behavior. Run `pnpm check` and `pnpm test`; keep the existing diagnostics, import boundaries, and hooks intact.

@@ -8,5 +8,5 @@ dist/
 .env
 .env.*
 *.tsbuildinfo
-apps/web/src/routeTree.gen.ts
 .agents/skills/
+.e2e/

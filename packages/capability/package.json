@@ -2,81 +2,63 @@
   "name": "@core/capability",
   "version": "0.1.0",
   "private": true,
-  "files": [
-    "dist",
-    "src"
-  ],
   "type": "module",
   "types": "./src/index.ts",
   "exports": {
     ".": {
       "types": "./src/index.ts",
-      "import": "./src/index.ts",
-      "default": "./dist/index.js"
+      "import": "./src/index.ts"
     },
     "./actor-watch": {
       "types": "./src/actor-watch.ts",
-      "import": "./src/actor-watch.ts",
-      "default": "./dist/actor-watch.js"
+      "import": "./src/actor-watch.ts"
     },
     "./call-watch": {
       "types": "./src/call-watch.ts",
-      "import": "./src/call-watch.ts",
-      "default": "./dist/call-watch.js"
+      "import": "./src/call-watch.ts"
     },
     "./approval": {
       "types": "./src/approval.ts",
-      "import": "./src/approval.ts",
-      "default": "./dist/approval.js"
+      "import": "./src/approval.ts"
     },
     "./contract": {
       "types": "./src/contract.ts",
-      "import": "./src/contract.ts",
-      "default": "./dist/contract.js"
+      "import": "./src/contract.ts"
     },
     "./define": {
       "types": "./src/define.ts",
-      "import": "./src/define.ts",
-      "default": "./dist/define.js"
+      "import": "./src/define.ts"
     },
     "./implement": {
       "types": "./src/implement.ts",
-      "import": "./src/implement.ts",
-      "default": "./dist/implement.js"
+      "import": "./src/implement.ts"
     },
     "./toolkit": {
       "types": "./src/toolkit.ts",
-      "import": "./src/toolkit.ts",
-      "default": "./dist/toolkit.js"
+      "import": "./src/toolkit.ts"
     },
     "./http-api": {
       "types": "./src/http-api.ts",
-      "import": "./src/http-api.ts",
-      "default": "./dist/http-api.js"
+      "import": "./src/http-api.ts"
     },
     "./rpc": {
       "types": "./src/rpc.ts",
-      "import": "./src/rpc.ts",
-      "default": "./dist/rpc.js"
+      "import": "./src/rpc.ts"
     },
     "./rpc-group": {
       "types": "./src/rpc-group.ts",
-      "import": "./src/rpc-group.ts",
-      "default": "./dist/rpc-group.js"
+      "import": "./src/rpc-group.ts"
     }
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
-    "build": "tsc -p tsconfig.build.json",
     "check": "pnpm run typecheck"
   },
   "dependencies": {
     "effect": "4.0.0"
   },
   "devDependencies": {
-    "@effect/platform-node": "4.0.0",
-    "@effect/vitest": "4.0.0",
     "@types/node": "24.13.6",
     "typescript": "7.0.2",
     "vitest": "5.0.1"

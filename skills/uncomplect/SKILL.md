@@ -33,6 +33,6 @@ Check replaceability by tracing imports: callers should depend on the service po
 
 Prefer a type or API that prevents the coupling. Use the existing import boundary rules and compiler diagnostics. Add a focused lint rule or meaningful test when a recurring problem warrants it; ordinary local changes do not require new lint infrastructure. Put conventions in `AGENTS.md` when code and static analysis cannot express them.
 
-Keep one development path through root `pnpm dev`. Run `pnpm check`, `pnpm test`, and `pnpm build` after implementation.
+Keep one development path through root `pnpm dev`. Run `pnpm check` and `pnpm test` after implementation.
 
 Report the concrete findings, preserved behavior, proposed or completed changes, what can be deleted, and validation. Distinguish a recommendation from an implemented fix.

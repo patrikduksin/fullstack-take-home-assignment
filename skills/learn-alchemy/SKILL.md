@@ -38,4 +38,4 @@ Planning or studying infrastructure does not authorize a deployment or resource 
 
 ## Verify changes
 
-Run `pnpm check`, `pnpm test`, and `pnpm build`. Use root `pnpm dev` to verify affected routes, service bindings, D1 queries, and reload behavior. For deployment changes, inspect the plan when credentials are available and report any verification that remains blocked. Keep the Worker compatibility date supported by the pinned local runtime.
+Run `pnpm check` and `pnpm test`. Use root `pnpm dev` to verify affected routes, service bindings, D1 queries, and reload behavior. For deployment changes, inspect the plan when credentials are available and report any verification that remains blocked. Keep the Worker compatibility date supported by the pinned local runtime.

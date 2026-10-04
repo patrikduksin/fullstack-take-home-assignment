@@ -7,10 +7,11 @@ A clean RAT stack starter for a fullstack take-home assignment. The web app uses
 Mise is highly recommended for working with this repo. The included `.mise.toml` pins Node 24.18.0 and pnpm 11.3.0 to the toolchain verified for local development, checks, tests, and builds. Using mise ensures you run those exact versions.
 
 ```sh
-mise install
-mise exec -- pnpm install --frozen-lockfile
+mise run setup
 mise exec -- pnpm dev
 ```
+
+`mise run setup` installs the pinned tools, workspace dependencies, local agent skills, and Chromium.
 
 With mise activated in your shell, you can run `pnpm` directly. Otherwise, use `mise exec --` before the pnpm commands below.
 
@@ -71,10 +72,11 @@ Commit the generated SQL and Drizzle metadata. Alchemy applies the same SQL to l
 ```sh
 pnpm check
 pnpm test
-pnpm build
 ```
 
-The fence includes strict TypeScript, Effect compiler diagnostics, Ultracite/Oxlint, architecture rules, Oxfmt, and Lefthook pre-commit checks. `pnpm build`, `pnpm typecheck`, and `pnpm test` use pnpm recursive workspace scripts. Builds run in dependency order. Type checking builds first to generate the TanStack route tree, then checks every workspace and the root tooling. `pnpm fix` applies safe lint fixes and formatting. CI installs from the frozen lockfile and runs the checks, tests, and build.
+See the [testing skill](skills/testing/SKILL.md) for test policy, commands, and prerequisites.
+
+The fence includes strict TypeScript, Effect compiler diagnostics, Ultracite/Oxlint, architecture rules, Oxfmt, and Lefthook pre-commit checks. Checks and unit tests run through pnpm workspace scripts; integration and browser suites use their owning packages, with a shared Alchemy harness in `@core/infra`. The generated TanStack route tree is checked into Git so a fresh checkout can typecheck. TanStack Start updates it during Alchemy dev and deployment; include those updates when changing routes. Type checking checks every workspace and the root tooling. Alchemy builds deployment bundles when it deploys the Stack. `pnpm fix` applies safe lint fixes and formatting. CI installs from the frozen lockfile and runs checks and tests.
 
 ## Cloudflare deployment
 
@@ -91,7 +93,7 @@ The stack creates a TanStack Start website, a private backend Worker, and D1. Th
 
 ## Source
 
-Five project skills are maintained in root [`skills/`](skills): `setup`, `add-a-capability`, `add-a-lifecycle-machine`, `learn-alchemy`, and `uncomplect`. The setup skill covers a fresh checkout; the other four are adapted for Core from RAT stack. The reference-repo maintenance and website skills were removed.
+Project skills are maintained in root [`skills/`](skills): `setup`, `testing`, `add-a-capability`, `add-a-lifecycle-machine`, `learn-alchemy`, and `uncomplect`. Setup and testing describe Core workflows; the other four are adapted from RAT stack.
 
 After cloning, install them for Codex from their local source with the Skills CLI:
 
@@ -99,6 +101,6 @@ After cloning, install them for Codex from their local source with the Skills CL
 pnpm skills:install
 ```
 
-Edit `skills/` and rerun the command after changes. Installed copies in `.agents/skills` are generated and ignored; `skills-lock.json` tracks the local source. [AGENTS.md](AGENTS.md) links to each skill.
+Edit `skills/` and rerun the command after changes. Installed copies in `.agents/skills` are generated and ignored; `skills-lock.json` tracks the local source. [AGENTS.md](AGENTS.md) contains the repository rules.
 
 Adapted from [joelhooks/rat-stack](https://github.com/joelhooks/rat-stack/tree/c7d11aa396dad097ecb41a3f316cc905f6037063), following its [keep-or-cut guide](https://ratstack.sh/skills/keep-or-cut). The retained capability projections, lint rules, and projection tests originate there. The MIT license is preserved.

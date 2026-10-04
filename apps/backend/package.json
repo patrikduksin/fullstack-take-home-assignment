@@ -19,8 +19,7 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "build": "tsc -p tsconfig.build.json",
-    "test": "vitest run"
+    "test:integration": "cd ../.. && vitest run --config vitest.stack.config.ts apps/backend/test/*.integration.test.ts"
   },
   "dependencies": {
     "@core/capability": "workspace:*",

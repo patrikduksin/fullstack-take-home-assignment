@@ -1,3 +1,12 @@
 [tools]
 node = "24.18.0"
 pnpm = "11.3.0"
+
+[tasks.setup]
+description = "Install workspace dependencies, local agent skills, and Chromium"
+dir = "{{config_root}}"
+run = [
+  "pnpm install --frozen-lockfile",
+  "pnpm skills:install",
+  'pnpm --filter @core/web exec playwright install chromium ${CI:+--with-deps}',
+]

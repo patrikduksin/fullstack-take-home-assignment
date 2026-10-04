@@ -189,7 +189,11 @@ const importModule = (
   if (
     target !== null &&
     !isInfraApp(filename) &&
-    isWithin(target, "apps/infra")
+    isWithin(target, "apps/infra") &&
+    !(
+      /^apps\/[^/]+\/test\//u.test(filename) &&
+      isWithin(target, "apps/infra/test")
+    )
   ) {
     context.report({ messageId: "infraOwner", node });
   }

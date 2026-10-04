@@ -31,6 +31,6 @@ Call the runner from the capability handler and provide service Layers in the ba
 
 Read [the lifecycle test guide](templates/lifecycle.model.test.md) when adding machine tests. Use `@effect/vitest` and schema-derived generators from `effect/Arbitrary`. Test legal endings, input forwarding, outcome preservation, and cleanup or cancellation where relevant.
 
-For nontrivial event histories, compare actor behavior with an independent domain model. Use a `Deferred` service fake to control actual child completion; synthetic child-done events do not prove runtime work completed. Graph traversal from `xstate/graph` can cover legal transitions but does not replace real actor tests. Use `TestClock.adjust` for deadlines instead of wall-clock sleeps.
+For nontrivial event histories, compare actor behavior with an independent domain model. Use real actor implementations; synthetic child-done events and service fakes do not prove runtime work completed. Test pure transition logic as unit tests and actors with provider dependencies against an Alchemy test stack. Graph traversal from `xstate/graph` can cover legal transitions but does not replace real actor tests. Use `TestClock.adjust` for deadlines instead of wall-clock sleeps.
 
-Keep the XState/Effect lint rules. Run `pnpm check`, `pnpm test`, and `pnpm build`.
+Keep the XState/Effect lint rules. Run `pnpm check` and `pnpm test`.

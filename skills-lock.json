@@ -4,12 +4,12 @@
     "add-a-capability": {
       "source": "./skills",
       "sourceType": "local",
-      "computedHash": "f1fc8f5a51726f0e4b80deedda4d1c5a3293ca8118a2c5e0eff705b5277ebc81"
+      "computedHash": "7bfb2340197cf57ed16bb760a3bd50d7a5629a702e681d7f5628c621d609911a"
     },
     "add-a-lifecycle-machine": {
       "source": "./skills",
       "sourceType": "local",
-      "computedHash": "dbe199f76c56c7538bc807509cc32a34fb712fe16887349c1377f1525ade8cb2"
+      "computedHash": "2ca274104087f853e42e2a4221d97ed7ade0909a04f08befa3dacc242cc24583"
     },
     "code-review": {
       "source": "mattpocock/skills",
@@ -34,6 +34,12 @@
       "sourceType": "github",
       "skillPath": "skills/engineering/domain-modeling/SKILL.md",
       "computedHash": "b3eb40152b81f0c98fd2095a023c019452dbdce56f7540cc67fece2972db8369"
+    },
+    "e2e": {
+      "source": "tester-army/e2e",
+      "sourceType": "github",
+      "skillPath": "skills/e2e/SKILL.md",
+      "computedHash": "3c0bea7a7339fbadac6f7f99f40db9e718b370f577545f87e75df7bee1a9c2a3"
     },
     "grill-me": {
       "source": "mattpocock/skills",
@@ -62,7 +68,7 @@
     "learn-alchemy": {
       "source": "./skills",
       "sourceType": "local",
-      "computedHash": "08e02aefeda7dfc8418537de83948ba1aaf2f0630d60fe5257ca4197a5aa4e8d"
+      "computedHash": "dcda5e3c6efcb84dea8aab63d60ffefb85532e5dd041776296f570694793cdf1"
     },
     "pr": {
       "source": "mattpocock/skills",
@@ -85,7 +91,7 @@
     "setup": {
       "source": "./skills",
       "sourceType": "local",
-      "computedHash": "dc8163b3a12a9497cf167a47209fdf4e7b936a20a3513607bf57aec7dab43c16"
+      "computedHash": "b47609e4b369e5f3c968e7344259b1f6a621ab46b47e6b12f944c61422f57d82"
     },
     "setup-matt-pocock-skills": {
       "source": "mattpocock/skills",
@@ -98,6 +104,11 @@
       "sourceType": "github",
       "skillPath": "skills/engineering/tdd/SKILL.md",
       "computedHash": "9ce12c4a1e209e557fcf9d02086ade3d7ffdb976186018fc1b063b4164246004"
+    },
+    "testing": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "2e606750461ccf838d1a01664cd85f81273cdaa3a56806dbbf4fbdec11a8bc29"
     },
     "to-spec": {
       "source": "mattpocock/skills",
@@ -114,7 +125,7 @@
     "uncomplect": {
       "source": "./skills",
       "sourceType": "local",
-      "computedHash": "f0e5a0679587135ffffeb32ceeb5067b369e87e29772c79fcafe8caeecf87efe"
+      "computedHash": "bff2b6d8abf14a256a626105b4feb2ccbb1046410efe1f8ed289faa080233040"
     },
     "wayfinder": {
       "source": "mattpocock/skills",

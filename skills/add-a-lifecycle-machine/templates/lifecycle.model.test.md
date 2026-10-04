@@ -12,7 +12,7 @@ Derive generated input and output values from domain schemas with `effect/Arbitr
 
 Use `getShortestPaths` from `xstate/graph` to cover legal endings. Use `getPathsFromEvents` for generated histories where useful. These exports follow the installed XState pin; do not add a separate graph package. Pure graph tests may use synthetic child outcomes, but stop traversal at a terminal outcome where interpreter behavior differs from pure transitions.
 
-Run corresponding histories against `createEffectActor` inside `Effect.scoped`. Supply a fake core service whose work awaits a `Deferred`. Complete the Deferred with a real success or typed failure and wait for the actor's expected state. Do not simulate child completion by sending an internal done event to a running actor.
+Run corresponding histories against `createEffectActor` inside `Effect.scoped`. Run real child work and wait for the actor's expected state. Provider-dependent work belongs in an Alchemy-managed integration suite; pure transitions and actors without provider dependencies can use unit tests. Never replace core services with fakes. Do not simulate child completion by sending an internal done event to a running actor.
 
 Check that the service receives the right input and runs the expected number of times. Check the final output and the runner's typed error channel. Where the lifecycle promises terminal immutability, deliver further legal external commands and verify no output change or additional work. Where cancellation matters, verify the scoped work is interrupted and resources are released.
 
