@@ -77,6 +77,8 @@ The fence includes strict TypeScript, Effect compiler diagnostics, Ultracite/Oxl
 
 ## Cloudflare deployment
 
+I chose Cloudflare because I already have an account and can deploy the assignment there easily. Alchemy keeps infrastructure in code, and core service ports separate domain logic from hosting and database adapters. If another provider is preferred, we can target Hetzner, AWS, or GCP by replacing the Cloudflare resource declarations, Worker runtime wiring, and D1 adapter while retaining the domain contracts and handlers. An agent can work from a single migration prompt to update the infrastructure and adapters, then verify the result on the target provider.
+
 Configure an Alchemy Cloudflare profile with `pnpm exec alchemy profile edit --add Cloudflare`. Then review the plan before deploying:
 
 ```sh
