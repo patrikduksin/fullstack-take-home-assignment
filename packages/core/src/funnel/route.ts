@@ -59,6 +59,7 @@ export const resolveRoute = (
 ): readonly string[] => {
   const steps = new Map(configuration.steps.map((step) => [step.id, step]));
   const route: string[] = [];
+  const reachedAnswers: Record<string, Answer> = {};
   let id: string | undefined = configuration.start;
 
   while (id !== undefined) {
@@ -74,8 +75,29 @@ export const resolveRoute = (
       break;
     }
 
-    id = nextStep(step, answers);
+    const answer = answers[id];
+
+    if (answer !== undefined) {
+      reachedAnswers[id] = answer;
+    }
+
+    id = nextStep(step, reachedAnswers);
   }
 
   return route;
+};
+
+export const pruneAnswers = (
+  configuration: FunnelConfiguration,
+  answers: Answers
+) => {
+  const route = resolveRoute(configuration, answers);
+  const eligible = new Set(route);
+
+  return {
+    answers: Object.fromEntries(
+      Object.entries(answers).filter(([id]) => eligible.has(id))
+    ),
+    route,
+  };
 };

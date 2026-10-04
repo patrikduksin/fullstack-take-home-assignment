@@ -1,5 +1,11 @@
-import { FunnelError, SessionViewSchema } from "@core/core/contracts";
-import type { FunnelSession } from "@core/core/contracts";
+import {
+  FunnelError,
+  FunnelConfigurationSchema,
+  FunnelSessionSchema,
+} from "@core/core/contracts";
+import type { CreateSessionInput, FunnelSession } from "@core/core/contracts";
+import { resolveVariant } from "@core/core/funnel/configuration";
+import { resolveRoute } from "@core/core/funnel/route";
 import { FunnelSessions } from "@core/core/funnel/session";
 import type * as Cloudflare from "alchemy/Cloudflare";
 import * as RuntimeContext from "alchemy/RuntimeContext";
@@ -38,25 +44,44 @@ export const d1FunnelSessions = (
       });
     }
 
-    return yield* Schema.decodeEffect(Schema.fromJsonString(SessionViewSchema))(
-      row.view
-    ).pipe(
+    const view = yield* Schema.decodeEffect(
+      Schema.fromJsonString(
+        Schema.Struct({
+          configuration: FunnelConfigurationSchema,
+          session: FunnelSessionSchema,
+        })
+      )
+    )(row.view).pipe(
       Effect.mapError(
         () =>
           new FunnelError({ message: "Your saved session could not be read." })
       )
     );
+
+    const configuration = resolveVariant(
+      view.configuration,
+      view.session.variant
+    );
+
+    return {
+      ...view,
+      configuration,
+      route: resolveRoute(configuration, view.session.answers),
+    };
   });
 
-  const create = Effect.gen(function* create() {
+  const create = Effect.fn("FunnelSessions.create")(function* create(
+    input: CreateSessionInput
+  ) {
     const row = yield* stored(
       database
-        .prepare(`WITH seed AS (SELECT lower(hex(randomblob(16))) AS id)
+        .prepare(`WITH seed AS MATERIALIZED (SELECT lower(hex(randomblob(16))) AS id, COALESCE(?, CASE WHEN random() < 0 THEN 'A' ELSE 'B' END) AS variant)
       INSERT INTO funnel_sessions(id, version, variant, state)
-      SELECT seed.id, v.version, 'A', json_object('id', seed.id, 'version', v.version, 'variant', 'A',
-        'currentStep', json_extract(v.configuration, '$.start'), 'answers', json('{}'), 'history', json('[]'), 'routeRevision', 0)
+      SELECT seed.id, v.version, seed.variant, json_object('id', seed.id, 'version', v.version, 'variant', seed.variant,
+        'currentStep', COALESCE(json_extract(v.configuration, '$.variants.' || seed.variant || '.start'), json_extract(v.configuration, '$.start')), 'answers', json('{}'), 'history', json('[]'), 'routeRevision', 0)
       FROM seed, funnel_active a JOIN funnel_versions v ON v.version = a.version WHERE a.singleton = 1
       RETURNING id`)
+        .bind(input.variant ?? null)
         .first<{ id: string }>()
     );
 
@@ -69,18 +94,25 @@ export const d1FunnelSessions = (
     return yield* load(row.id);
   });
 
-  const save = Effect.fn("FunnelSessions.save")(function* save(
-    session: FunnelSession
-  ) {
-    yield* stored(
-      database
-        .prepare(
-          "UPDATE funnel_sessions SET state = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?"
+  const save = Effect.fn("FunnelSessions.save")(
+    (session: FunnelSession, expectedCurrentStep: string) =>
+      stored(
+        database
+          .prepare(
+            "UPDATE funnel_sessions SET state = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND json_extract(state, '$.currentStep') = ?"
+          )
+          .bind(JSON.stringify(session), session.id, expectedCurrentStep)
+          .run()
+      ).pipe(
+        Effect.flatMap((changed) =>
+          changed.meta.changes === 1
+            ? Effect.void
+            : new FunnelError({
+                message: "Your session changed. Reload it before continuing.",
+              })
         )
-        .bind(JSON.stringify(session), session.id)
-        .run()
-    );
-  });
+      )
+  );
 
   return FunnelSessions.of({ create, load, save });
 };

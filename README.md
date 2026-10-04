@@ -34,7 +34,7 @@ Effect 4 owns services, errors, configuration, and resource lifetimes. XState 6 
 
 The home page runs a fictional trail-planning funnel from backend JSON. Sessions pin an immutable configuration version and retain accepted answers and navigation in D1. Unsubmitted edits remain in the same browser through reload and reopening. The diagnostic page at `/health` checks the backend and database separately from the visitor flow.
 
-`configurations/linear-v1.json` is an authored fixture because the original assignment JSON files were not supplied.
+`configurations/iteration-one/trail.json` and `configurations/iteration-one/camp.json` are the authored first-iteration configurations because the original assignment JSON files were not supplied. Each includes at least six screens, conditional routing, and A/B content. The linear and variant fixtures record the earlier incremental deliveries.
 
 ## Interfaces
 
@@ -108,3 +108,9 @@ pnpm skills:install
 Edit `skills/` and rerun the command after changes. Installed copies in `.agents/skills` are generated and ignored; `skills-lock.json` tracks the local source. [AGENTS.md](AGENTS.md) contains the repository rules.
 
 Adapted from [joelhooks/rat-stack](https://github.com/joelhooks/rat-stack/tree/c7d11aa396dad097ecb41a3f316cc905f6037063), following its [keep-or-cut guide](https://ratstack.sh/skills/keep-or-cut). The retained capability projections, lint rules, and projection tests originate there. The MIT license is preserved.
+
+### Variant review
+
+New sessions receive A or B from the backend with a proposed equal split. The assignment is stored with the immutable version and survives Back, reload, and reopening. Open `/?variant=A` or `/?variant=B` to force a new session. An existing session keeps its assignment when the URL changes; use **Start new session** to inspect the query-selected variant. Other values are rejected with a validation message.
+
+The fictional `variants-v1.json` configures B's wording, question order, and result CTA. The proposed hypothesis is that a shorter path and clearer result CTA improve result reach per started session, the primary metric. CTA clicks per result viewer are secondary. This initial B fixture demonstrates ordering and clearer wording; a later configured iteration will shorten its route. Synthetic traffic verifies calculations and cannot establish experiment significance.

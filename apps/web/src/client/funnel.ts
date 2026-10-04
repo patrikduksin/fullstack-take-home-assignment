@@ -5,7 +5,11 @@ import { FetchHttpClient, HttpBody, HttpClient } from "effect/http";
 
 const request = Effect.fn("funnel.request")(function* request(
   path: string,
-  body?: { readonly answer?: Answer }
+  body?: {
+    readonly answer?: Answer;
+    readonly stepId?: string;
+    readonly variant?: string;
+  }
 ) {
   const response = yield* body === undefined
     ? HttpClient.get(`/api${path}`)
@@ -24,11 +28,12 @@ const request = Effect.fn("funnel.request")(function* request(
   );
 }, Effect.provide(FetchHttpClient.layer));
 
-export const startSession = () => request("/sessions", {});
+export const startSession = (variant?: string) =>
+  request("/sessions", variant === undefined ? {} : { variant });
 
 export const loadSession = (id: string) => request(`/sessions/${id}`);
 
-export const advanceSession = (id: string, answer: Answer) =>
-  request(`/sessions/${id}/advance`, { answer });
+export const advanceSession = (id: string, stepId: string, answer: Answer) =>
+  request(`/sessions/${id}/advance`, { answer, stepId });
 
 export const backSession = (id: string) => request(`/sessions/${id}/back`, {});

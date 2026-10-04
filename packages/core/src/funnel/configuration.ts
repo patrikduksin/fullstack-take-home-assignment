@@ -56,14 +56,74 @@ export const FunnelStepSchema = Schema.Struct({
 
 export type FunnelStep = typeof FunnelStepSchema.Type;
 
+export const VariantSchema = Schema.Literals(["A", "B"]);
+
+export type Variant = typeof VariantSchema.Type;
+
+const StepOverrideSchema = Schema.Struct({
+  body: FunnelStepSchema.fields.body,
+  cta: FunnelStepSchema.fields.cta,
+  max: FunnelStepSchema.fields.max,
+  min: FunnelStepSchema.fields.min,
+  next: FunnelStepSchema.fields.next,
+  options: FunnelStepSchema.fields.options,
+  title: Schema.optional(Schema.String),
+  transition: FunnelStepSchema.fields.transition,
+});
+
+const VariantOverrideSchema = Schema.Struct({
+  name: Schema.optional(Schema.String),
+  start: Schema.optional(Schema.String),
+  steps: Schema.optional(Schema.Record(Schema.String, StepOverrideSchema)),
+});
+
 export const FunnelConfigurationSchema = Schema.Struct({
   id: Schema.String,
   name: Schema.String,
   start: Schema.String,
   steps: Schema.Array(FunnelStepSchema),
+  variants: Schema.optional(
+    Schema.Struct({
+      A: Schema.optional(VariantOverrideSchema),
+      B: Schema.optional(VariantOverrideSchema),
+    })
+  ),
 });
 
 export type FunnelConfiguration = typeof FunnelConfigurationSchema.Type;
+
+export const resolveVariant = (
+  configuration: FunnelConfiguration,
+  variant: Variant
+): FunnelConfiguration => {
+  const { variants, ...base } = configuration;
+  const override = variants?.[variant];
+
+  return {
+    ...base,
+    name: override?.name ?? base.name,
+    start: override?.start ?? base.start,
+    steps: base.steps.map((step) => {
+      const replacement = override?.steps?.[step.id];
+
+      const resolved = {
+        ...step,
+        ...replacement,
+        title: replacement?.title ?? step.title,
+      };
+
+      if (replacement?.transition !== undefined) {
+        delete resolved.next;
+      }
+
+      if (replacement?.next !== undefined) {
+        delete resolved.transition;
+      }
+
+      return resolved;
+    }),
+  };
+};
 
 const numberError = (step: FunnelStep, answer: Answer): string | undefined =>
   Schema.is(Schema.Finite)(answer) &&
@@ -398,5 +458,37 @@ export const validateConfiguration = flow(
   Effect.mapError(
     (issue) => new ConfigurationInvalid({ message: issue.message })
   ),
-  Effect.flatMap(validateResolvedConfiguration)
+  Effect.flatMap(
+    Effect.fnUntraced(function* validateVariants(configuration) {
+      yield* validateResolvedConfiguration(configuration);
+      const ids = new Set(configuration.steps.map((step) => step.id));
+
+      for (const variant of ["A", "B"] as const) {
+        for (const [id, override] of Object.entries(
+          configuration.variants?.[variant]?.steps ?? {}
+        )) {
+          if (
+            override.next !== undefined &&
+            override.transition !== undefined
+          ) {
+            return yield* new ConfigurationInvalid({
+              message: `Variant ${variant} step ${id} must define one route rule.`,
+            });
+          }
+
+          if (!ids.has(id)) {
+            return yield* new ConfigurationInvalid({
+              message: `Variant ${variant} overrides missing step ${id}.`,
+            });
+          }
+        }
+
+        yield* validateResolvedConfiguration(
+          resolveVariant(configuration, variant)
+        );
+      }
+
+      return configuration;
+    })
+  )
 );

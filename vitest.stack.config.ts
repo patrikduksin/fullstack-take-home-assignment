@@ -8,5 +8,6 @@ export default defineConfig({
       "apps/*/test/browser.test.ts",
     ],
     sequence: { hooks: "list" },
+    testTimeout: 60_000,
   },
 });

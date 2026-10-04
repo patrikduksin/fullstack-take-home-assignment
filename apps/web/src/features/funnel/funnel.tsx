@@ -23,6 +23,11 @@ import { Label } from "../../components/ui/label.js";
 
 const storageKey = "funnel-session";
 
+const startSessionFromQuery = () =>
+  startSession(
+    new URLSearchParams(window.location.search).get("variant") ?? undefined
+  );
+
 const draftKey = (sessionId: string, stepId: string) =>
   `funnel-draft:${sessionId}:${stepId}`;
 
@@ -125,6 +130,12 @@ export const Funnel = () => {
   const [error, setError] = useState<string>();
 
   const restore = (next: SessionView) => {
+    for (const step of next.configuration.steps) {
+      if (!next.route.includes(step.id)) {
+        localStorage.removeItem(draftKey(next.session.id, step.id));
+      }
+    }
+
     localStorage.setItem(storageKey, next.session.id);
     setView(next);
 
@@ -177,7 +188,7 @@ export const Funnel = () => {
 
   useEffect(() => {
     const id = localStorage.getItem(storageKey);
-    perform(id === null ? startSession() : loadSession(id));
+    perform(id === null ? startSessionFromQuery() : loadSession(id));
   }, []);
 
   const step = view?.configuration.steps.find(
@@ -206,7 +217,7 @@ export const Funnel = () => {
           variant="ghost"
           disabled={pending}
           onClick={() => {
-            perform(startSession());
+            perform(startSessionFromQuery());
           }}
         >
           Start new session
@@ -233,7 +244,9 @@ export const Funnel = () => {
                 className="mt-4"
                 onClick={() => {
                   const id = localStorage.getItem(storageKey);
-                  perform(id === null ? startSession() : loadSession(id));
+                  perform(
+                    id === null ? startSessionFromQuery() : loadSession(id)
+                  );
                 }}
               >
                 Try again
@@ -244,8 +257,8 @@ export const Funnel = () => {
       ) : (
         <>
           <p className="text-muted-foreground text-sm">
-            Step {view.session.history.length + 1} of{" "}
-            {view.configuration.steps.length}
+            Step {view.route.indexOf(view.session.currentStep) + 1} of{" "}
+            {view.route.length}
           </p>
           <Card>
             <CardHeader>
@@ -280,6 +293,7 @@ export const Funnel = () => {
                     perform(
                       advanceSession(
                         view.session.id,
+                        step.id,
                         step.type === "information" ? null : answer
                       ),
                       true

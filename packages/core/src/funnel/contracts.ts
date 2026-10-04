@@ -22,6 +22,7 @@ export type FunnelSession = typeof FunnelSessionSchema.Type;
 
 export const SessionViewSchema = Schema.Struct({
   configuration: FunnelConfigurationSchema,
+  route: Schema.Array(Schema.String),
   session: FunnelSessionSchema,
 });
 
@@ -31,9 +32,11 @@ export const createSessionContract = defineContract("createSession", {
   description: "Start a funnel session pinned to the active configuration",
   failure: FunnelError,
   http: { method: "POST", path: "/sessions" },
-  input: Schema.Struct({}),
+  input: Schema.Struct({ variant: Schema.optional(Schema.String) }),
   output: SessionViewSchema,
 });
+
+export type CreateSessionInput = typeof createSessionContract.input.Type;
 
 export const loadSessionContract = defineContract("loadSession", {
   annotations: { idempotent: true, readOnly: true },
@@ -48,7 +51,11 @@ export const advanceSessionContract = defineContract("advanceSession", {
   description: "Validate the current answer and advance the funnel",
   failure: FunnelError,
   http: { method: "POST", path: "/sessions/:id/advance" },
-  input: Schema.Struct({ answer: AnswerSchema, id: Schema.String }),
+  input: Schema.Struct({
+    answer: AnswerSchema,
+    id: Schema.String,
+    stepId: Schema.String,
+  }),
   output: SessionViewSchema,
 });
 
