@@ -51,4 +51,39 @@ export const funnelSessions = sqliteTable(
   ]
 );
 
-export const schema = { funnelActive, funnelSessions, funnelVersions };
+export const funnelEvents = sqliteTable(
+  "funnel_events",
+  {
+    clientTimestamp: text("client_timestamp").notNull(),
+    eventId: text("event_id").notNull().primaryKey(),
+    properties: text("properties").notNull(),
+    serverTimestamp: text("server_timestamp")
+      .notNull()
+      .default(sql`(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))`),
+    sessionId: text("session_id")
+      .notNull()
+      .references(() => funnelSessions.id),
+    stepId: text("step_id"),
+    type: text("type").notNull(),
+    utm: text("utm").notNull(),
+    variant: text("variant").notNull(),
+    version: text("version")
+      .notNull()
+      .references(() => funnelVersions.version),
+  },
+  (table) => [
+    check("funnel_events_utm_json", sql`json_valid(${table.utm})`),
+    check(
+      "funnel_events_properties_json",
+      sql`json_valid(${table.properties})`
+    ),
+    check("funnel_events_variant", sql`${table.variant} IN ('A', 'B')`),
+  ]
+);
+
+export const schema = {
+  funnelActive,
+  funnelEvents,
+  funnelSessions,
+  funnelVersions,
+};

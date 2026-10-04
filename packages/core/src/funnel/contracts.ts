@@ -8,12 +8,32 @@ export class FunnelError extends Schema.TaggedError<FunnelError>()(
   { message: Schema.String }
 ) {}
 
+const AttributionValue = Schema.String.check(Schema.isMaxLength(256));
+
+export const UtmSchema = Schema.Struct({
+  campaign: Schema.optional(AttributionValue),
+  content: Schema.optional(AttributionValue),
+  medium: Schema.optional(AttributionValue),
+  source: Schema.optional(AttributionValue),
+  term: Schema.optional(AttributionValue),
+});
+
+export type Utm = typeof UtmSchema.Type;
+
+export const CreateSessionInputSchema = Schema.Struct({
+  utm: Schema.optional(UtmSchema),
+  variant: Schema.optional(Schema.String),
+});
+
+export type CreateSessionInput = typeof CreateSessionInputSchema.Type;
+
 export const FunnelSessionSchema = Schema.Struct({
   answers: Schema.Record(Schema.String, AnswerSchema),
   currentStep: Schema.String,
   history: Schema.Array(Schema.String),
   id: Schema.String,
   routeRevision: Schema.Int,
+  utm: UtmSchema,
   variant: Schema.Literals(["A", "B"]),
   version: Schema.String,
 });
@@ -31,7 +51,7 @@ export const createSessionContract = defineContract("createSession", {
   description: "Start a funnel session pinned to the active configuration",
   failure: FunnelError,
   http: { method: "POST", path: "/sessions" },
-  input: Schema.Struct({}),
+  input: CreateSessionInputSchema,
   output: SessionViewSchema,
 });
 
@@ -58,4 +78,40 @@ export const backSessionContract = defineContract("backSession", {
   http: { method: "POST", path: "/sessions/:id/back" },
   input: Schema.Struct({ id: Schema.String }),
   output: SessionViewSchema,
+});
+
+export const FunnelEventSchema = Schema.Struct({
+  clientTimestamp: Schema.String,
+  eventId: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(128)),
+  properties: Schema.Record(
+    Schema.String,
+    Schema.Union([Schema.String, Schema.Boolean, Schema.Finite])
+  ),
+  sessionId: Schema.String.check(
+    Schema.isMinLength(1),
+    Schema.isMaxLength(128)
+  ),
+  stepId: Schema.NullOr(Schema.String),
+  type: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(64)),
+  utm: UtmSchema,
+  variant: Schema.Literals(["A", "B"]),
+  version: Schema.String,
+});
+
+export type FunnelEvent = typeof FunnelEventSchema.Type;
+
+export const StoredFunnelEventSchema = Schema.Struct({
+  ...FunnelEventSchema.fields,
+  serverTimestamp: Schema.String,
+});
+
+export type StoredFunnelEvent = typeof StoredFunnelEventSchema.Type;
+
+export const loadSessionEventsContract = defineContract("loadSessionEvents", {
+  annotations: { idempotent: true, readOnly: true },
+  description: "Read immutable analytics envelopes for a funnel session",
+  failure: FunnelError,
+  http: { method: "GET", path: "/sessions/:id/events" },
+  input: Schema.Struct({ id: Schema.String }),
+  output: Schema.Array(StoredFunnelEventSchema),
 });

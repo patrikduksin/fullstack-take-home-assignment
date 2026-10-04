@@ -28,7 +28,11 @@ export {
   SessionViewSchema,
 } from "./funnel/contracts.js";
 
-export type { FunnelSession, SessionView } from "./funnel/contracts.js";
+export type {
+  CreateSessionInput,
+  FunnelSession,
+  SessionView,
+} from "./funnel/contracts.js";
 
 export {
   AnswerSchema,
@@ -41,3 +45,17 @@ export type {
   FunnelConfiguration,
   FunnelStep,
 } from "./funnel/configuration.js";
+
+export {
+  CreateSessionInputSchema,
+  UtmSchema,
+  FunnelEventSchema,
+  StoredFunnelEventSchema,
+  loadSessionEventsContract,
+} from "./funnel/contracts.js";
+
+export type {
+  Utm,
+  FunnelEvent,
+  StoredFunnelEvent,
+} from "./funnel/contracts.js";

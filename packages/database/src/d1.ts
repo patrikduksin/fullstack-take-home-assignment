@@ -1,10 +1,12 @@
 import { Database } from "@core/core";
 import { DatabaseUnavailable } from "@core/core/contracts";
+import { FunnelEvents } from "@core/core/funnel/events";
 import { FunnelSessions } from "@core/core/funnel/session";
 import * as Cloudflare from "alchemy/Cloudflare";
 import * as RuntimeContext from "alchemy/RuntimeContext";
 import { Effect, Layer } from "effect";
 
+import { d1FunnelEvents } from "./funnel-events.js";
 import { d1FunnelSessions } from "./funnel.js";
 
 export const d1DatabaseLayer = Layer.unwrap(
@@ -15,7 +17,7 @@ export const d1DatabaseLayer = Layer.unwrap(
 
     const database = yield* Cloudflare.D1.QueryDatabase(resource);
 
-    return Layer.merge(
+    return Layer.mergeAll(
       Layer.succeed(
         Database,
         Database.of({
@@ -35,7 +37,8 @@ export const d1DatabaseLayer = Layer.unwrap(
             ),
         })
       ),
-      Layer.succeed(FunnelSessions, d1FunnelSessions(database))
+      Layer.succeed(FunnelSessions, d1FunnelSessions(database)),
+      Layer.succeed(FunnelEvents, d1FunnelEvents(database))
     );
   })
 ).pipe(Layer.provide(Cloudflare.D1.QueryDatabaseBinding));
