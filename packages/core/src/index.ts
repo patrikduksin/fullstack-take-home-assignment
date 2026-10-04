@@ -3,6 +3,7 @@ import { Effect } from "effect";
 
 import { healthContract } from "./contracts.js";
 import { Database } from "./database.js";
+import { funnelAnalyticsCapabilities } from "./funnel/analytics.js";
 import { funnelEventCapabilities } from "./funnel/events.js";
 import { funnelSessionCapabilities } from "./funnel/session.js";
 import { funnelVersionCapabilities } from "./funnel/versions.js";
@@ -21,4 +22,5 @@ export const capabilities = [
   ...funnelEventCapabilities,
 
   ...funnelVersionCapabilities,
+  ...funnelAnalyticsCapabilities,
 ] as const;

@@ -1,5 +1,6 @@
 import { Database } from "@core/core";
 import { DatabaseUnavailable } from "@core/core/contracts";
+import { FunnelAnalytics } from "@core/core/funnel/analytics";
 import { FunnelEvents } from "@core/core/funnel/events";
 import { FunnelSessions } from "@core/core/funnel/session";
 import { FunnelVersions } from "@core/core/funnel/versions";
@@ -7,6 +8,7 @@ import * as Cloudflare from "alchemy/Cloudflare";
 import * as RuntimeContext from "alchemy/RuntimeContext";
 import { Effect, Layer } from "effect";
 
+import { d1FunnelAnalytics } from "./funnel-analytics.js";
 import { d1FunnelEvents } from "./funnel-events.js";
 import { d1FunnelVersions } from "./funnel-versions.js";
 import { d1FunnelSessions } from "./funnel.js";
@@ -41,7 +43,8 @@ export const d1DatabaseLayer = Layer.unwrap(
       ),
       Layer.succeed(FunnelSessions, d1FunnelSessions(database)),
       Layer.succeed(FunnelEvents, d1FunnelEvents(database)),
-      Layer.succeed(FunnelVersions, d1FunnelVersions(database))
+      Layer.succeed(FunnelVersions, d1FunnelVersions(database)),
+      Layer.succeed(FunnelAnalytics, d1FunnelAnalytics(database))
     );
   })
 ).pipe(Layer.provide(Cloudflare.D1.QueryDatabaseBinding));
