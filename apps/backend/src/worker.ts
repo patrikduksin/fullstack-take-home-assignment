@@ -9,7 +9,6 @@ export default class Backend extends Cloudflare.Worker<Backend>()(
   "CoreBackend",
   {
     compatibility: { date: "2026-09-25" },
-    dev: { port: 3001 },
     main: import.meta.url,
     workersDev: false,
   },

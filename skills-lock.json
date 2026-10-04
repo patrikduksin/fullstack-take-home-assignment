@@ -62,7 +62,7 @@
     "learn-alchemy": {
       "source": "./skills",
       "sourceType": "local",
-      "computedHash": "a1b286927b178ece610f7979d2be004b81c95e4bd623f1bed7c8bc6c334924d0"
+      "computedHash": "08e02aefeda7dfc8418537de83948ba1aaf2f0630d60fe5257ca4197a5aa4e8d"
     },
     "pr": {
       "source": "mattpocock/skills",
@@ -85,7 +85,7 @@
     "setup": {
       "source": "./skills",
       "sourceType": "local",
-      "computedHash": "0baffe08ca45929755d92e9d6d61abc775fc01ba2a1f0dbdb71b893821a07b4b"
+      "computedHash": "dc8163b3a12a9497cf167a47209fdf4e7b936a20a3513607bf57aec7dab43c16"
     },
     "setup-matt-pocock-skills": {
       "source": "mattpocock/skills",

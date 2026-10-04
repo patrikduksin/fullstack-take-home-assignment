@@ -14,7 +14,7 @@ mise exec -- pnpm dev
 
 With mise activated in your shell, you can run `pnpm` directly. Otherwise, use `mise exec --` before the pnpm commands below.
 
-`pnpm dev` runs `alchemy dev` from the workspace root. Alchemy starts the TanStack Start website at http://localhost:3000, the backend Worker at http://localhost:3001, and a local D1 database. The website uses a Cloudflare service binding to reach the backend in development and deployment.
+`pnpm dev` runs `alchemy dev` from the workspace root. Alchemy starts the TanStack Start website, backend Worker, and local D1 database, choosing available ports. Use the reported `websiteUrl` and `backendUrl` outputs. The website uses a Cloudflare service binding to reach the backend in development and deployment.
 
 Alchemy manages Worker reloads, Vite HMR, local D1 migrations, and persistent local state under `.alchemy/`. Local development creates no cloud resources. Private workspace packages export their TypeScript sources so Alchemy and Vite can reload changes without a separate build watcher.
 
@@ -46,10 +46,11 @@ The web app forwards these endpoints to the backend. Both origins expose the sam
 | `GET /docs`         | API reference                              |
 
 ```sh
-curl http://localhost:3000/api/health
+# Set WEBSITE_URL to the websiteUrl reported by Alchemy.
+curl "$WEBSITE_URL/api/health"
 ```
 
-Connect an MCP client to `http://localhost:3000/mcp`. The server supports MCP protocol versions 2025-06-18, 2025-03-26, and 2024-11-05, including initialization and session headers.
+Connect an MCP client to `/mcp` on the reported `websiteUrl`. The server supports MCP protocol versions 2025-06-18, 2025-03-26, and 2024-11-05, including initialization and session headers.
 
 ## Add assignment behavior
 

@@ -12,9 +12,9 @@ Read `AGENTS.md` and inspect the pinned Alchemy source before changing resource 
 Read these files in order:
 
 1. `apps/infra/alchemy.run.ts` declares the `Core` Stack with `Cloudflare.providers()` and `Cloudflare.state()`, yields Backend and Website, and returns backend and website URLs.
-2. `apps/backend/src/worker.ts` declares `CoreBackend`, its runtime entrypoint, compatibility date, and dev port 3001. Its construction supplies HTTP platform services and database dependencies to backend routes.
+2. `apps/backend/src/worker.ts` declares `CoreBackend`, its runtime entrypoint, and compatibility date. Its construction supplies HTTP platform services and database dependencies to backend routes.
 3. `packages/database/src/d1.ts` declares `CoreDatabase`, obtains its query binding, and implements the core Database service. Its migrations path is resolved from `import.meta.url`.
-4. `apps/web/src/website.ts` declares `CoreWebsite`, dev port 3000, and the `BACKEND` service binding. `apps/web/src/server/backend.ts` consumes that binding for TanStack Start server requests.
+4. `apps/web/src/website.ts` declares `CoreWebsite` and the `BACKEND` service binding. `apps/web/src/server/backend.ts` consumes that binding for TanStack Start server requests. Alchemy chooses available local ports; use the Stack's reported URLs.
 
 A resource is a cloud object with a stable logical name. A binding gives runtime code access to a declared resource. A Layer supplies service implementations. Keep these concerns aligned so removing an adapter also removes its resource declarations and binding dependencies.
 
