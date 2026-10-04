@@ -33,14 +33,59 @@ export const FunnelStepSchema = Schema.Struct({
 
 export type FunnelStep = typeof FunnelStepSchema.Type;
 
+export const VariantSchema = Schema.Literals(["A", "B"]);
+
+export type Variant = typeof VariantSchema.Type;
+
+const StepOverrideSchema = Schema.Struct({
+  body: FunnelStepSchema.fields.body,
+  cta: FunnelStepSchema.fields.cta,
+  max: FunnelStepSchema.fields.max,
+  min: FunnelStepSchema.fields.min,
+  next: FunnelStepSchema.fields.next,
+  options: FunnelStepSchema.fields.options,
+  title: Schema.optional(Schema.String),
+});
+
+const VariantOverrideSchema = Schema.Struct({
+  name: Schema.optional(Schema.String),
+  start: Schema.optional(Schema.String),
+  steps: Schema.optional(Schema.Record(Schema.String, StepOverrideSchema)),
+});
+
 export const FunnelConfigurationSchema = Schema.Struct({
   id: Schema.String,
   name: Schema.String,
   start: Schema.String,
   steps: Schema.Array(FunnelStepSchema),
+  variants: Schema.optional(
+    Schema.Struct({
+      A: Schema.optional(VariantOverrideSchema),
+      B: Schema.optional(VariantOverrideSchema),
+    })
+  ),
 });
 
 export type FunnelConfiguration = typeof FunnelConfigurationSchema.Type;
+
+export const resolveVariant = (
+  configuration: FunnelConfiguration,
+  variant: Variant
+): FunnelConfiguration => {
+  const { variants, ...base } = configuration;
+  const override = variants?.[variant];
+
+  return {
+    ...base,
+    name: override?.name ?? base.name,
+    start: override?.start ?? base.start,
+    steps: base.steps.map((step) => ({
+      ...step,
+      ...override?.steps?.[step.id],
+      title: override?.steps?.[step.id]?.title ?? step.title,
+    })),
+  };
+};
 
 const numberError = (step: FunnelStep, answer: Answer): string | undefined =>
   Schema.is(Schema.Finite)(answer) &&
