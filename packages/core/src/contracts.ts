@@ -32,6 +32,7 @@ export type { FunnelSession, SessionView } from "./funnel/contracts.js";
 
 export {
   AnswerSchema,
+  ConfigurationInvalid,
   FunnelConfigurationSchema,
   FunnelStepSchema,
 } from "./funnel/configuration.js";
