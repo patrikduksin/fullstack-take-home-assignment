@@ -93,7 +93,7 @@ const pendingBatch = () =>
     .toSorted((left, right) =>
       left.event.clientTimestamp.localeCompare(right.event.clientTimestamp)
     )
-    .slice(0, 100);
+    .slice(0, 20);
 
 const flushPendingEvents = Effect.fn("flushPendingEvents")(
   function* flushPendingEvents() {
@@ -146,7 +146,7 @@ const flushPendingEvents = Effect.fn("flushPendingEvents")(
       }
     });
   },
-  Effect.timeout("5 seconds"),
+  Effect.timeout("30 seconds"),
   Effect.ignore,
   Effect.provide(FetchHttpClient.layer)
 );
@@ -193,6 +193,40 @@ export const recordDisplayedStep = (view: SessionView) => {
   if (step.type === "result") {
     enqueue(view, "result_viewed", step.id, properties);
   }
+};
+
+export const recordAdvance = (previous: SessionView, next: SessionView) => {
+  const step = previous.configuration.steps.find(
+    (candidate) => candidate.id === previous.session.currentStep
+  );
+
+  if (step === undefined || step.type === "result") {
+    return;
+  }
+
+  const properties = { routeRevision: next.session.routeRevision };
+
+  if (step.type !== "information") {
+    enqueue(previous, "answer_submitted", step.id, properties);
+  }
+
+  enqueue(previous, "step_completed", step.id, {
+    ...properties,
+    nextStepId: next.session.currentStep,
+  });
+};
+
+export const recordBack = (previous: SessionView, next: SessionView) => {
+  enqueue(previous, "back_clicked", previous.session.currentStep, {
+    routeRevision: next.session.routeRevision,
+    targetStepId: next.session.currentStep,
+  });
+};
+
+export const recordCta = (view: SessionView) => {
+  enqueue(view, "cta_clicked", view.session.currentStep, {
+    routeRevision: view.session.routeRevision,
+  });
 };
 
 export const startEventDelivery = () => {

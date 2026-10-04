@@ -4,6 +4,9 @@ import { Effect, Option, Schema } from "effect";
 import { useEffect, useRef, useState } from "react";
 
 import {
+  recordAdvance,
+  recordBack,
+  recordCta,
   recordDisplayedStep,
   startEventDelivery,
 } from "../../client/events.js";
@@ -158,7 +161,7 @@ export const Funnel = () => {
 
   const perform = (
     operation: ReturnType<typeof startSession>,
-    discardDraft = false
+    navigation?: "advance" | "back"
   ) => {
     setPending(true);
     setError(undefined);
@@ -178,10 +181,15 @@ export const Funnel = () => {
             );
           },
           onSuccess: (next) => {
-            if (discardDraft && view !== undefined) {
+            if (navigation === "advance" && view !== undefined) {
               localStorage.removeItem(
                 draftKey(view.session.id, view.session.currentStep)
               );
+              recordAdvance(view, next);
+            }
+
+            if (navigation === "back" && view !== undefined) {
+              recordBack(view, next);
             }
 
             restore(next);
@@ -303,14 +311,21 @@ export const Funnel = () => {
                 variant="outline"
                 disabled={pending || view.session.history.length === 0}
                 onClick={() => {
-                  perform(backSession(view.session.id));
+                  perform(backSession(view.session.id), "back");
                 }}
               >
                 Back
               </Button>
               {step.type === "result" ? (
                 <Button asChild>
-                  <a href={step.cta?.href}>{step.cta?.label}</a>
+                  <a
+                    href={step.cta?.href}
+                    onClick={() => {
+                      recordCta(view);
+                    }}
+                  >
+                    {step.cta?.label}
+                  </a>
                 </Button>
               ) : (
                 <Button
@@ -322,7 +337,7 @@ export const Funnel = () => {
                         step.id,
                         step.type === "information" ? null : answer
                       ),
-                      true
+                      "advance"
                     );
                   }}
                 >

@@ -126,3 +126,117 @@ test("retains offline display events across reopening and delivers their origina
   await expect(screen.getByRole("heading", "Choose your pace")).toBeVisible();
   await app.screenshot("events-delivered-with-session-preserved");
 });
+
+// @effect-diagnostics-next-line asyncFunction:off -- The e2e runner requires Promise callbacks.
+test("records accepted branch actions, Back, result and a real departing CTA without answers", async ({
+  app,
+  browser,
+  screen,
+}) => {
+  // @effect-diagnostics-next-line asyncFunction:off -- The browser route handler requires a Promise callback.
+  await browser.route("**/api/events", async (route) => {
+    await route.abort();
+  });
+  const departures: string[] = [];
+  // @effect-diagnostics-next-line asyncFunction:off -- Abort the real external request without inventing a destination response.
+  await browser.route("https://www.nps.gov/**", async (route) => {
+    departures.push(route.request.url);
+    await route.abort();
+  });
+  await app.open("/?variant=A&utm_source=action-letter");
+  await expect(
+    screen.getByRole("heading", "Plan a fictional weekend trail")
+  ).toBeVisible();
+  await screen.getByRole("button", "Continue").tap();
+  await screen.getByRole("radio", "Active hike").check();
+  await screen.getByRole("button", "Continue").tap();
+  await expect(
+    screen.getByRole("heading", "Choose your trail supplies")
+  ).toBeVisible();
+  await screen.getByRole("button", "Back").tap();
+  await expect(screen.getByRole("heading", "Choose your pace")).toBeVisible();
+  await screen.getByRole("radio", "Gentle stroll").check();
+  await screen.getByRole("button", "Continue").tap();
+  await screen.getByRole("checkbox", "Forest").check();
+  await screen.getByRole("button", "Continue").tap();
+  await screen.getByRole("spinbutton", "How many hours do you have?").fill("4");
+  await screen.getByRole("button", "Continue").tap();
+  await screen.getByRole("button", "Continue").tap();
+  await expect(
+    screen.getByRole("heading", "Your sample trail plan is ready")
+  ).toBeVisible();
+  await app.screenshot("event-actions-result-before-departure");
+  await screen.getByRole("link", "Explore trail ideas").tap();
+  expect(departures).toContain("https://www.nps.gov/subjects/trails/index.htm");
+  await app.restart();
+  await expect(
+    screen.getByRole("heading", "Your sample trail plan is ready")
+  ).toBeVisible();
+  const queued = await pendingEvents(browser);
+  expect(queued.filter((event) => event.type === "cta_clicked")).toHaveLength(
+    1
+  );
+  expect(queued.filter((event) => event.type === "step_viewed")).toHaveLength(
+    9
+  );
+  expect(queued.filter((event) => event.type === "result_viewed")).toHaveLength(
+    2
+  );
+  expect(
+    queued.filter((event) => event.type === "answer_submitted")
+  ).toHaveLength(4);
+  expect(
+    queued.filter((event) => event.type === "step_completed")
+  ).toHaveLength(6);
+  expect(queued.filter((event) => event.type === "back_clicked")).toHaveLength(
+    1
+  );
+  expect(queued).toHaveLength(23);
+  const completions = queued.filter((event) => event.type === "step_completed");
+  expect(
+    completions.find(
+      (event) =>
+        event.stepId === "pace" && event.properties.nextStepId === "supplies"
+    )?.properties
+  ).toEqual({ nextStepId: "supplies", routeRevision: 1 });
+  expect(
+    completions.find(
+      (event) =>
+        event.stepId === "pace" && event.properties.nextStepId === "interests"
+    )?.properties
+  ).toEqual({ nextStepId: "interests", routeRevision: 2 });
+  expect(
+    queued.find((event) => event.type === "back_clicked")?.properties
+  ).toEqual({ routeRevision: 1, targetStepId: "pace" });
+
+  for (const event of queued.filter(
+    (candidate) => candidate.type === "answer_submitted"
+  )) {
+    expect(Object.keys(event.properties)).toEqual(["routeRevision"]);
+  }
+
+  expect(JSON.stringify(queued)).not.toContain('"active"');
+  expect(JSON.stringify(queued)).not.toContain('"gentle"');
+  expect(JSON.stringify(queued)).not.toContain('"forest"');
+  expect(queued.every((event) => event.utm.source === "action-letter")).toBe(
+    true
+  );
+  await app.screenshot("event-actions-survive-real-navigation");
+  const delivered = browser.waitForResponse("**/api/events");
+  await browser.unroute("**/api/events");
+  const deliveredResponse = await delivered;
+  expect(deliveredResponse.status).toBe(200);
+
+  const stored = await Effect.runPromise(
+    storedEvents(
+      `${app.baseUrl}/api/sessions/${queued[0]?.sessionId}/events`,
+      queued.map((event) => event.eventId)
+    )
+  );
+
+  expect(stored).toHaveLength(24);
+  expect(
+    stored.filter((event) => event.type === "session_started")
+  ).toHaveLength(1);
+  expect(await pendingEvents(browser)).toEqual([]);
+});
