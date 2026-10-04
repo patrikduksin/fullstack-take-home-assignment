@@ -4,6 +4,8 @@ A configuration-driven fictional trail and camp planning demo built with TanStac
 
 The assignment JSON files were not supplied. The files under `configurations/` are authored fictional replacements. They demonstrate the required behavior and do not represent booking, financial offers, or real customer data.
 
+Public website: [Funnel Runtime](https://core-corewebsite-assignment-demo-ggqzchgyxaih2whr.a-72c.workers.dev).
+
 Repository: [patrikduksin/fullstack-take-home-assignment](https://github.com/patrikduksin/fullstack-take-home-assignment).
 
 On the website, `/` opens the funnel, `/internal/versions` manages publication and rollback, `/internal/analytics` shows the dashboard, and `/health` checks the backend and database. Internal management is unauthenticated within this demonstration's scope.
@@ -161,12 +163,14 @@ Lefthook runs checks and unit tests on every commit; never bypass hooks. Full ha
 For a directly selected public compatibility journey from `apps/web`, use the runner's collection selector rather than the ephemeral-stack wrapper:
 
 ```sh
-APP_URL="$WEBSITE_URL" E2E_TEST_FILE=test/e2e/iteration-two.e2e.ts pnpm exec e2e run --output /tmp/funnel-public-iteration-two --trace on --video on
+APP_URL="$WEBSITE_URL" E2E_TEST_FILE=test/e2e/iteration-two.e2e.ts pnpm exec e2e run --output .e2e/public-iteration-two --trace on --video on
 ```
+
+Run this command from `apps/web`. The runner requires an output directory inside that project; copy the completed report and artifacts outside the checkout afterward.
 
 This journey publishes a unique copy of the fictional fixture and rolls back once, preserving the old B session and new A/B sessions. It does not seed or delete the persistent traffic population. It must run after first-iteration acceptance.
 
-The native GitHub stack is #19, currently ordered #12 → #13 → #16 → #15 → #18 → #17 → #21 → #20 → #30 → #31 → #29. Task PRs carry local API/browser evidence, artifact downloads, and UI screenshots. [Integration PR #14](https://github.com/patrikduksin/fullstack-take-home-assignment/pull/14) provides the combined change against `main`; it is separate from the per-task stack. The requested deliverable is reviewable PRs.
+The [native GitHub stack](https://github.com/patrikduksin/fullstack-take-home-assignment/pull/12) is #19, ordered #12 → #13 → #16 → #15 → #18 → #17 → #21 → #20 → #30 → #31 → #29 → [#32](https://github.com/patrikduksin/fullstack-take-home-assignment/pull/32). Task PRs carry local API/browser evidence, artifact downloads, and UI screenshots. [Integration PR #14](https://github.com/patrikduksin/fullstack-take-home-assignment/pull/14) provides the combined change against `main`; it is separate from the per-task stack. The requested deliverable is reviewable PRs.
 
 The repository's Cloudflare Actions secrets are missing: `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN`. Local verification uses the working Cloudflare profile. The user accepted local evidence with this CI limitation; CI still runs the required tests. Local OAuth credentials are not transferred to GitHub. See the [observed CI failure](https://github.com/patrikduksin/fullstack-take-home-assignment/actions/runs/37179622508).
 
@@ -176,18 +180,27 @@ Cloudflare Workers and D1 are the accepted runtime and storage for this exercise
 
 ```sh
 pnpm infra:plan --stage assignment-demo --detailed --no-input
-pnpm infra:deploy --stage assignment-demo --no-input
+pnpm infra:deploy --stage assignment-demo --yes --no-input
 ```
 
 The persistent stage creates the public website, private backend Worker, D1, and required bindings. The backend has no public workers.dev origin; public API checks use the website. Keep the reported website URL and persistent records after smoke checks. Deployment is separate from local development.
 
-| Milestone                                 | Actual UTC time         |
-| ----------------------------------------- | ----------------------- |
-| Original agreed assignment start          | Not supplied            |
-| Complete local first-iteration acceptance | 2026-10-04 08:20:53 UTC |
-| First local second-iteration publication  | 2026-10-04 08:23:49 UTC |
+| Milestone                                   | Actual UTC time             |
+| ------------------------------------------- | --------------------------- |
+| Original agreed assignment start            | Not supplied                |
+| Complete local first-iteration acceptance   | 2026-10-04 08:20:53 UTC     |
+| First local second-iteration publication    | 2026-10-04 08:23:49 UTC     |
+| Persistent website deployment               | 2026-10-04 08:37:59.854 UTC |
+| Persistent first-iteration acceptance       | 2026-10-04 08:45:24.788 UTC |
+| Persistent second-iteration publication     | 2026-10-04 08:48:39.418 UTC |
+| Persistent compatibility rollback           | 2026-10-04 08:49:05.585 UTC |
+| Persistent rollback and retained-data proof | 2026-10-04 08:49:47.440 UTC |
 
 The complete local second-iteration checks passed at 2026-10-04 08:35:41 UTC. These times come from retained reports and activation history. Incremental commits and earlier command-line traffic milestones are not full first-iteration acceptance. The original 48-hour start was not provided, so it is not inferred from implementation activity.
+
+The persistent demonstration retained the generated 120-session population with 56 result-reaching sessions and 40 CTA clickers. Thirteen final public browser checks passed across health, funnel, event delivery, dashboard and second-iteration compatibility, with zero failed, flaky or skipped checks. Historical traffic counts remained unchanged after publication and rollback. The original B browser profile still resumed its original preparation screen, and both new A/B sessions retained the second version and its configured non-sensitive event.
+
+During public acceptance, a rollback POST outside the coordinated test run reactivated the camp version at 08:45:25 UTC. Native Worker logs confirmed the request; its caller is unknown. The compatibility precondition stopped before publication. One guarded, recorded restore returned to trail, then the complete compatibility journey passed. This demonstrates the documented unauthenticated operator scope: other visitors can change the active version. The failed precondition, request history, restoration and successful follow-up are retained as evidence.
 
 ## Repository provenance
 
