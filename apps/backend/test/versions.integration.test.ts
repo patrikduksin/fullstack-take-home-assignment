@@ -176,3 +176,69 @@ test(
   }),
   { timeout: 60_000 }
 );
+
+test(
+  "concurrent creation pins a complete version while publication changes the active pointer",
+  Effect.gen(function* concurrentPublication() {
+    const { websiteUrl } = yield* stack;
+
+    const before = yield* HttpClient.get(`${websiteUrl}/api/versions`).pipe(
+      Effect.flatMap((response) => response.json),
+      Effect.flatMap(decodeState)
+    );
+
+    const draft = {
+      ...configuration,
+      id: "api-concurrent-v1",
+      name: "Concurrent publication",
+    };
+
+    const [published, sessions] = yield* Effect.all(
+      [
+        HttpClient.post(`${websiteUrl}/api/versions`, {
+          body: HttpBody.jsonUnsafe({ configuration: draft }),
+        }).pipe(
+          Effect.flatMap((response) => response.json),
+          Effect.flatMap(decodeState)
+        ),
+        Effect.forEach(
+          [0, 1, 2, 3, 4, 5],
+          () =>
+            HttpClient.post(`${websiteUrl}/api/sessions`, {
+              body: HttpBody.jsonUnsafe({ variant: "A" }),
+            }).pipe(
+              Effect.flatMap((response) => response.json),
+              Effect.flatMap(decodeSession)
+            ),
+          { concurrency: "unbounded" }
+        ),
+      ],
+      { concurrency: "unbounded" }
+    );
+
+    expect(published.activeVersion).toBe("api-concurrent-v1");
+
+    for (const view of sessions) {
+      expect([before.activeVersion, "api-concurrent-v1"]).toContain(
+        view.session.version
+      );
+      expect(view.configuration.id).toBe(view.session.version);
+      expect(view.session).toMatchObject({
+        answers: {},
+        currentStep: "welcome",
+        history: [],
+        variant: "A",
+      });
+
+      const resumed = yield* HttpClient.get(
+        `${websiteUrl}/api/sessions/${view.session.id}`
+      ).pipe(
+        Effect.flatMap((response) => response.json),
+        Effect.flatMap(decodeSession)
+      );
+
+      expect(resumed).toEqual(view);
+    }
+  }),
+  { timeout: 60_000 }
+);
