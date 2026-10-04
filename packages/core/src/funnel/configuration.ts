@@ -11,6 +11,28 @@ export type Answer = typeof AnswerSchema.Type;
 
 const Option = Schema.Struct({ id: Schema.String, label: Schema.String });
 
+export const ConditionSchema = Schema.Union([
+  Schema.Struct({
+    operator: Schema.Literals(["equals", "includes"]),
+    stepId: Schema.String,
+    value: Schema.String,
+  }),
+  Schema.Struct({
+    operator: Schema.Literals(["gte", "lte"]),
+    stepId: Schema.String,
+    value: Schema.Finite,
+  }),
+]);
+
+export type Condition = typeof ConditionSchema.Type;
+
+export const TransitionSchema = Schema.Struct({
+  branches: Schema.Array(
+    Schema.Struct({ next: Schema.String, when: ConditionSchema })
+  ),
+  default: Schema.String,
+});
+
 export const FunnelStepSchema = Schema.Struct({
   body: Schema.optional(Schema.String),
   cta: Schema.optional(
@@ -22,6 +44,7 @@ export const FunnelStepSchema = Schema.Struct({
   next: Schema.optional(Schema.String),
   options: Schema.optional(Schema.Array(Option)),
   title: Schema.String,
+  transition: Schema.optional(TransitionSchema),
   type: Schema.Literals([
     "single-select",
     "multi-select",
