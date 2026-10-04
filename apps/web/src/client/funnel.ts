@@ -1,15 +1,13 @@
 import { FunnelError, SessionViewSchema } from "@core/core/contracts";
-import type { Answer } from "@core/core/contracts";
+import type { Answer, CreateSessionInput } from "@core/core/contracts";
 import { Effect, Schema } from "effect";
 import { FetchHttpClient, HttpBody, HttpClient } from "effect/http";
 
 const request = Effect.fn("funnel.request")(function* request(
   path: string,
-  body?: {
-    readonly answer?: Answer;
-    readonly stepId?: string;
-    readonly variant?: string;
-  }
+  body?:
+    | CreateSessionInput
+    | { readonly answer?: Answer; readonly stepId?: string }
 ) {
   const response = yield* body === undefined
     ? HttpClient.get(`/api${path}`)
@@ -28,8 +26,22 @@ const request = Effect.fn("funnel.request")(function* request(
   );
 }, Effect.provide(FetchHttpClient.layer));
 
-export const startSession = (variant?: string) =>
-  request("/sessions", variant === undefined ? {} : { variant });
+export const startSession = (variant?: string) => {
+  const query = new URLSearchParams(window.location.search);
+
+  const utm = Object.fromEntries(
+    ["source", "medium", "campaign", "term", "content"].flatMap((key) => {
+      const value = query.get(`utm_${key}`);
+
+      return value === null ? [] : [[key, value]];
+    })
+  );
+
+  return request(
+    "/sessions",
+    variant === undefined ? { utm } : { utm, variant }
+  );
+};
 
 export const loadSession = (id: string) => request(`/sessions/${id}`);
 

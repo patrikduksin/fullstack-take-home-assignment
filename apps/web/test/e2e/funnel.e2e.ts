@@ -96,6 +96,9 @@ test("reviews B's configured order and result without changing a resumed assignm
   ).toBeVisible();
   await expect(screen.getByText(/Variant B/u)).toBeVisible();
   await screen.getByRole("button", "Back").tap();
+  await expect(
+    screen.getByRole("heading", "Before you head out")
+  ).toBeVisible();
   await app.restart();
   await expect(
     screen.getByRole("heading", "Before you head out")

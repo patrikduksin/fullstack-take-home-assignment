@@ -48,6 +48,31 @@ export type {
 } from "./funnel/configuration.js";
 
 export {
+  CreateSessionInputSchema,
+  UtmSchema,
+  FunnelEventSchema,
+  StoredFunnelEventSchema,
+  loadSessionEventsContract,
+} from "./funnel/contracts.js";
+
+export type {
+  Utm,
+  FunnelEvent,
+  StoredFunnelEvent,
+} from "./funnel/contracts.js";
+
+export {
+  EventReceiptSchema,
+  ingestEventsContract,
+} from "./funnel/contracts.js";
+
+export type { EventReceipt } from "./funnel/contracts.js";
+
+export { BuiltinEventTypeSchema } from "./funnel/configuration.js";
+
+export type { BuiltinEventType } from "./funnel/configuration.js";
+
+export {
   listVersionsContract,
   publishVersionContract,
   rollbackVersionContract,
@@ -56,3 +81,7 @@ export {
 } from "./funnel/version-contracts.js";
 
 export type { VersionState } from "./funnel/version-contracts.js";
+
+export { EventDeclarationSchema } from "./funnel/configuration.js";
+
+export type { EventDeclaration } from "./funnel/configuration.js";

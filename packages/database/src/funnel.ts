@@ -41,6 +41,7 @@ export const d1FunnelSessions = (
     if (row === null) {
       return yield* new FunnelError({
         message: "Your saved session could not be found. Start a new session.",
+        reason: "session_not_found",
       });
     }
 
@@ -78,10 +79,10 @@ export const d1FunnelSessions = (
         .prepare(`WITH seed AS MATERIALIZED (SELECT lower(hex(randomblob(16))) AS id, COALESCE(?, CASE WHEN random() < 0 THEN 'A' ELSE 'B' END) AS variant)
       INSERT INTO funnel_sessions(id, version, variant, state)
       SELECT seed.id, v.version, seed.variant, json_object('id', seed.id, 'version', v.version, 'variant', seed.variant,
-        'currentStep', COALESCE(json_extract(v.configuration, '$.variants.' || seed.variant || '.start'), json_extract(v.configuration, '$.start')), 'answers', json('{}'), 'history', json('[]'), 'routeRevision', 0)
+        'currentStep', COALESCE(json_extract(v.configuration, '$.variants.' || seed.variant || '.start'), json_extract(v.configuration, '$.start')), 'answers', json('{}'), 'history', json('[]'), 'routeRevision', 0, 'utm', json(?))
       FROM seed, funnel_active a JOIN funnel_versions v ON v.version = a.version WHERE a.singleton = 1
       RETURNING id`)
-        .bind(input.variant ?? null)
+        .bind(input.variant ?? null, JSON.stringify(input.utm ?? {}))
         .first<{ id: string }>()
     );
 

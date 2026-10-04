@@ -38,7 +38,7 @@ export const FunnelStepSchema = Schema.Struct({
   cta: Schema.optional(
     Schema.Struct({ href: Schema.String, label: Schema.String })
   ),
-  id: Schema.String,
+  id: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(128)),
   max: Schema.optional(Schema.Finite),
   min: Schema.optional(Schema.Finite),
   next: Schema.optional(Schema.String),
@@ -77,7 +77,38 @@ const VariantOverrideSchema = Schema.Struct({
   steps: Schema.optional(Schema.Record(Schema.String, StepOverrideSchema)),
 });
 
+const EventPropertyDeclarationSchema = Schema.Union([
+  Schema.Struct({
+    emit: Schema.optional(Schema.Boolean),
+    kind: Schema.Literal("boolean"),
+  }),
+  Schema.Struct({
+    emit: Schema.optional(Schema.String),
+    kind: Schema.Literal("enum"),
+    values: Schema.NonEmptyArray(
+      Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(64))
+    ),
+  }),
+  Schema.Struct({
+    emit: Schema.optional(Schema.Literals(["source", "target"])),
+    kind: Schema.Literal("step"),
+  }),
+]);
+
+export const EventDeclarationSchema = Schema.Struct({
+  on: Schema.optional(Schema.Literal("step_completed")),
+  properties: Schema.Record(
+    Schema.String.check(Schema.isPattern(/^[a-zA-Z][a-zA-Z0-9_]{0,63}$/u)),
+    EventPropertyDeclarationSchema
+  ),
+  stepIds: Schema.NonEmptyArray(Schema.String),
+  type: Schema.String.check(Schema.isPattern(/^[a-z][a-z0-9_]{0,63}$/u)),
+});
+
+export type EventDeclaration = typeof EventDeclarationSchema.Type;
+
 export const FunnelConfigurationSchema = Schema.Struct({
+  eventTypes: Schema.optional(Schema.Array(EventDeclarationSchema)),
   id: Schema.String,
   name: Schema.String,
   start: Schema.String,
@@ -182,10 +213,104 @@ export const answerError = (
   }
 };
 
+export const BuiltinEventTypeSchema = Schema.Literals([
+  "session_started",
+  "step_viewed",
+  "answer_submitted",
+  "step_completed",
+  "back_clicked",
+  "result_viewed",
+  "cta_clicked",
+]);
+
+export type BuiltinEventType = typeof BuiltinEventTypeSchema.Type;
+
 export class ConfigurationInvalid extends Schema.TaggedError<ConfigurationInvalid>()(
   "ConfigurationInvalid",
   { message: Schema.String }
 ) {}
+
+const eventPropertyError = (
+  declaration: EventDeclaration,
+  name: string,
+  property: typeof EventPropertyDeclarationSchema.Type
+): string | undefined => {
+  if (/answer|email|phone|free.?text|url|contact/iu.test(name)) {
+    return `Event ${declaration.type} cannot declare sensitive property ${name}.`;
+  }
+
+  if (declaration.on !== undefined && property.emit === undefined) {
+    return `Automatic event ${declaration.type} needs an emission value for ${name}.`;
+  }
+
+  if (
+    property.kind === "enum" &&
+    (new Set(property.values).size !== property.values.length ||
+      (property.emit !== undefined && !property.values.includes(property.emit)))
+  ) {
+    return `Event ${declaration.type} needs unique enum values and a listed emission value.`;
+  }
+
+  return undefined;
+};
+
+const eventDeclarationError = (
+  configuration: FunnelConfiguration,
+  declaration: EventDeclaration
+): string | undefined => {
+  if (Schema.is(BuiltinEventTypeSchema)(declaration.type)) {
+    return `Event ${declaration.type} is reserved by the runtime.`;
+  }
+
+  if (new Set(declaration.stepIds).size !== declaration.stepIds.length) {
+    return `Event ${declaration.type} has duplicate step references.`;
+  }
+
+  for (const id of declaration.stepIds) {
+    const step = configuration.steps.find((candidate) => candidate.id === id);
+
+    if (step === undefined) {
+      return `Event ${declaration.type} references missing step ${id}.`;
+    }
+
+    if (declaration.on === "step_completed" && step.type === "result") {
+      return `Event ${declaration.type} cannot complete a result step.`;
+    }
+  }
+
+  for (const [name, property] of Object.entries(declaration.properties)) {
+    const error = eventPropertyError(declaration, name, property);
+
+    if (error !== undefined) {
+      return error;
+    }
+  }
+
+  return undefined;
+};
+
+const eventDeclarationsError = (
+  configuration: FunnelConfiguration
+): string | undefined => {
+  const declarations = configuration.eventTypes ?? [];
+
+  if (
+    new Set(declarations.map((declaration) => declaration.type)).size !==
+    declarations.length
+  ) {
+    return "Declared event types must be unique.";
+  }
+
+  for (const declaration of declarations) {
+    const error = eventDeclarationError(configuration, declaration);
+
+    if (error !== undefined) {
+      return error;
+    }
+  }
+
+  return undefined;
+};
 
 const choiceError = (step: FunnelStep): string | undefined => {
   if (step.options === undefined || step.options.length === 0) {
@@ -460,6 +585,12 @@ export const validateConfiguration = flow(
   ),
   Effect.flatMap(
     Effect.fnUntraced(function* validateVariants(configuration) {
+      const eventError = eventDeclarationsError(configuration);
+
+      if (eventError !== undefined) {
+        return yield* new ConfigurationInvalid({ message: eventError });
+      }
+
       yield* validateResolvedConfiguration(configuration);
       const ids = new Set(configuration.steps.map((step) => step.id));
 

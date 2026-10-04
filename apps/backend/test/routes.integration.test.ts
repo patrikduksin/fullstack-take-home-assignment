@@ -71,6 +71,13 @@ test(
       headers,
     });
 
+    if (initialized.status !== 200) {
+      yield* Effect.logError(
+        "MCP initialization failed",
+        yield* initialized.text
+      );
+    }
+
     expect(initialized.status).toBe(200);
     const sessionId = initialized.headers["mcp-session-id"];
     expect(sessionId).toBeDefined();
@@ -89,6 +96,13 @@ test(
       ),
       headers: sessionHeaders,
     });
+
+    if (acknowledged.status !== 202) {
+      yield* Effect.logError(
+        "MCP notification failed",
+        yield* acknowledged.text
+      );
+    }
 
     expect(acknowledged.status).toBe(202);
 
