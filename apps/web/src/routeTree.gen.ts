@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as RpcRouteImport } from './routes/rpc'
 import { Route as OpenapiDotjsonRouteImport } from './routes/openapi[.]json'
 import { Route as McpRouteImport } from './routes/mcp'
+import { Route as HealthRouteImport } from './routes/health'
 import { Route as DocsRouteImport } from './routes/docs'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiSplatRouteImport } from './routes/api.$'
@@ -29,6 +30,11 @@ const OpenapiDotjsonRoute = OpenapiDotjsonRouteImport.update({
 const McpRoute = McpRouteImport.update({
   id: '/mcp',
   path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HealthRoute = HealthRouteImport.update({
+  id: '/health',
+  path: '/health',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DocsRoute = DocsRouteImport.update({
@@ -50,6 +56,7 @@ const ApiSplatRoute = ApiSplatRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/docs': typeof DocsRoute
+  '/health': typeof HealthRoute
   '/mcp': typeof McpRoute
   '/openapi.json': typeof OpenapiDotjsonRoute
   '/rpc': typeof RpcRoute
@@ -58,6 +65,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/docs': typeof DocsRoute
+  '/health': typeof HealthRoute
   '/mcp': typeof McpRoute
   '/openapi.json': typeof OpenapiDotjsonRoute
   '/rpc': typeof RpcRoute
@@ -67,6 +75,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/docs': typeof DocsRoute
+  '/health': typeof HealthRoute
   '/mcp': typeof McpRoute
   '/openapi.json': typeof OpenapiDotjsonRoute
   '/rpc': typeof RpcRoute
@@ -74,15 +83,25 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/docs' | '/mcp' | '/openapi.json' | '/rpc' | '/api/$'
+  fullPaths:
+    '/' | '/docs' | '/health' | '/mcp' | '/openapi.json' | '/rpc' | '/api/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/docs' | '/mcp' | '/openapi.json' | '/rpc' | '/api/$'
-  id: '__root__' | '/' | '/docs' | '/mcp' | '/openapi.json' | '/rpc' | '/api/$'
+  to: '/' | '/docs' | '/health' | '/mcp' | '/openapi.json' | '/rpc' | '/api/$'
+  id:
+    | '__root__'
+    | '/'
+    | '/docs'
+    | '/health'
+    | '/mcp'
+    | '/openapi.json'
+    | '/rpc'
+    | '/api/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DocsRoute: typeof DocsRoute
+  HealthRoute: typeof HealthRoute
   McpRoute: typeof McpRoute
   OpenapiDotjsonRoute: typeof OpenapiDotjsonRoute
   RpcRoute: typeof RpcRoute
@@ -112,6 +131,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof McpRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/health': {
+      id: '/health'
+      path: '/health'
+      fullPath: '/health'
+      preLoaderRoute: typeof HealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/docs': {
       id: '/docs'
       path: '/docs'
@@ -139,6 +165,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DocsRoute: DocsRoute,
+  HealthRoute: HealthRoute,
   McpRoute: McpRoute,
   OpenapiDotjsonRoute: OpenapiDotjsonRoute,
   RpcRoute: RpcRoute,

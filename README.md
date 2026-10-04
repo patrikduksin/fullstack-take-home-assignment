@@ -32,7 +32,9 @@ Alchemy manages Worker reloads, Vite HMR, local D1 migrations, and persistent lo
 
 Effect 4 owns services, errors, configuration, and resource lifetimes. XState 6 and `@xstate/effect` are available for assignment lifecycles. Alchemy 2 declares cloud resources. Package versions are pinned to the upstream snapshot.
 
-The only starter capability is `health`. It runs a database query. There are no assignment models, authentication flows, content site, CLI, analytics, or demo domain features.
+The home page runs a fictional trail-planning funnel from backend JSON. Sessions pin an immutable configuration version and retain accepted answers and navigation in D1. Unsubmitted edits remain in the same browser through reload and reopening. The diagnostic page at `/health` checks the backend and database separately from the visitor flow.
+
+`configurations/linear-v1.json` is an authored fixture because the original assignment JSON files were not supplied.
 
 ## Interfaces
 
@@ -67,7 +69,7 @@ Add SQLite tables to `packages/database/src/schema.ts` with Drizzle, then genera
 pnpm --filter @core/database generate
 ```
 
-Commit the generated SQL and Drizzle metadata. Alchemy applies the same SQL to local D1 during development and Cloudflare D1 during deployment. The initial schema is empty so it does not impose a domain on the assignment.
+Commit the generated SQL and Drizzle metadata. Alchemy applies the same SQL to local D1 during development and Cloudflare D1 during deployment. The initial migration creates the funnel version, active pointer, and session tables and seeds a complete fictional configuration.
 
 ## Validate
 

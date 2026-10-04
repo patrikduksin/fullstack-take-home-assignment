@@ -17,3 +17,27 @@ export const healthContract = defineContract("health", {
     status: Schema.Literal("ok"),
   }),
 });
+
+export {
+  advanceSessionContract,
+  backSessionContract,
+  createSessionContract,
+  FunnelError,
+  FunnelSessionSchema,
+  loadSessionContract,
+  SessionViewSchema,
+} from "./funnel/contracts.js";
+
+export type { FunnelSession, SessionView } from "./funnel/contracts.js";
+
+export {
+  AnswerSchema,
+  FunnelConfigurationSchema,
+  FunnelStepSchema,
+} from "./funnel/configuration.js";
+
+export type {
+  Answer,
+  FunnelConfiguration,
+  FunnelStep,
+} from "./funnel/configuration.js";

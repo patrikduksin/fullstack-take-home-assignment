@@ -8,7 +8,7 @@ test("hydrates the health client and queries D1 again after reload", async ({
   browser,
   screen,
 }) => {
-  await app.open("/");
+  await app.open("/health");
   await expect(screen.getByText("Backend ok. Database ready.")).toBeVisible();
 
   if (process.env.E2E_AGENT_ASSERTIONS !== "0") {

@@ -1,8 +1,11 @@
 import { Database } from "@core/core";
 import { DatabaseUnavailable } from "@core/core/contracts";
+import { FunnelSessions } from "@core/core/funnel/session";
 import * as Cloudflare from "alchemy/Cloudflare";
 import * as RuntimeContext from "alchemy/RuntimeContext";
 import { Effect, Layer } from "effect";
+
+import { d1FunnelSessions } from "./funnel.js";
 
 export const d1DatabaseLayer = Layer.unwrap(
   Effect.gen(function* makeD1Database() {
@@ -12,24 +15,27 @@ export const d1DatabaseLayer = Layer.unwrap(
 
     const database = yield* Cloudflare.D1.QueryDatabase(resource);
 
-    return Layer.succeed(
-      Database,
-      Database.of({
-        check: database
-          .prepare("SELECT 1")
-          .first()
-          .pipe(
-            Effect.asVoid,
-            Effect.catchCause(() =>
-              Effect.fail(
-                new DatabaseUnavailable({
-                  message: "Could not query D1 database",
-                })
-              )
+    return Layer.merge(
+      Layer.succeed(
+        Database,
+        Database.of({
+          check: database
+            .prepare("SELECT 1")
+            .first()
+            .pipe(
+              Effect.asVoid,
+              Effect.catchCause(() =>
+                Effect.fail(
+                  new DatabaseUnavailable({
+                    message: "Could not query D1 database",
+                  })
+                )
+              ),
+              Effect.provide(RuntimeContext.RuntimeContext.phantom)
             ),
-            Effect.provide(RuntimeContext.RuntimeContext.phantom)
-          ),
-      })
+        })
+      ),
+      Layer.succeed(FunnelSessions, d1FunnelSessions(database))
     );
   })
 ).pipe(Layer.provide(Cloudflare.D1.QueryDatabaseBinding));
