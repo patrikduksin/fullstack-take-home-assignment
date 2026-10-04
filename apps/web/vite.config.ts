@@ -4,6 +4,9 @@ import viteReact from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
 export default defineConfig({
-  build: { rolldownOptions: { external: ["cloudflare:workers"] } },
+  build: {
+    outDir: process.env.VITEST === "true" ? `dist/test-${process.pid}` : "dist",
+    rolldownOptions: { external: ["cloudflare:workers"] },
+  },
   plugins: [tailwindcss(), tanstackStart(), viteReact()],
 });

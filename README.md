@@ -80,6 +80,10 @@ pnpm test
 
 See the [testing skill](skills/testing/SKILL.md) for test policy, commands, and prerequisites.
 
+Lefthook runs `pnpm check` and `pnpm test:unit` on every commit. This keeps intermediate commits checked without redeploying remote stacks after each small change. Before marking a task PR ready or handing over the completed work, run both `pnpm check` and `pnpm test` and retain the real API and browser artifacts. Never bypass Git hooks.
+
+After unit tests pass, `pnpm test` starts the API and browser suites together. `scripts/test-remote.sh` waits for both suites to finish, including cleanup, and returns a failure if either failed. Remote API suites use two concurrent workers, each with its own Cloudflare stage and D1 database; browser journeys remain serial. Test builds write to `apps/web/dist/test-<build-process-id>` so one Vite build cannot clear assets another stack is uploading. These ignored build directories remain available until local cleanup; normal development and deployment use `dist`.
+
 The fence includes strict TypeScript, Effect compiler diagnostics, Ultracite/Oxlint, architecture rules, Oxfmt, and Lefthook pre-commit checks. Checks and unit tests run through pnpm workspace scripts; integration and browser suites use their owning packages, with a shared Alchemy harness in `@core/infra`. The generated TanStack route tree is checked into Git so a fresh checkout can typecheck. TanStack Start updates it during Alchemy dev and deployment; include those updates when changing routes. Type checking checks every workspace and the root tooling. Alchemy builds deployment bundles when it deploys the Stack. `pnpm fix` applies safe lint fixes and formatting. CI installs from the frozen lockfile and runs checks and tests.
 
 ## Cloudflare deployment
