@@ -76,7 +76,7 @@ test(
     const url = yield* Schema.decodeUnknownEffect(Schema.String)(websiteUrl);
     const fixture = yield* seedBrowserAnalytics(url);
 
-    yield* runBrowserJourneys([], ".e2e/initial", 13, {
+    yield* runBrowserJourneys([], ".e2e/initial", 14, {
       ANALYTICS_TEST_V1: fixture.originalVersion,
       ANALYTICS_TEST_V2: fixture.nextVersion,
       APP_URL: url,

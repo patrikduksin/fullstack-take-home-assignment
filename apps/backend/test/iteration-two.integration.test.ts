@@ -299,6 +299,14 @@ test(
     );
 
     expect(published.activeVersion).toBe(configuration.id);
+    const publicationAcceptedAt = DateTime.formatIso(yield* DateTime.now);
+    yield* Effect.logInfo({
+      originalBSession: oldB.session.id,
+      originalVersion: before.activeVersion,
+      phase: "iteration-two-publication-accepted",
+      publicationAcceptedAt,
+      publishedVersion: configuration.id,
+    });
     expect(published.history[0]).toMatchObject({
       kind: "publish",
       previousVersion: before.activeVersion,
@@ -601,6 +609,7 @@ test(
       newSummary: newBaseline.summary,
       oldCampaign,
       oldSummary: oldBaseline.summary,
+      publicationAcceptedAt,
       publishedAt: published.history[0]?.activatedAt,
       publishedVersion: configuration.id,
       rolledBackAt: restored.history[0]?.activatedAt,

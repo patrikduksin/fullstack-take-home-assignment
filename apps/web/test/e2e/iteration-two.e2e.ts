@@ -236,7 +236,9 @@ test(
       await expect(
         screen
           .getByRole("region", "Activation history")
-          .getByText(`publish · ${configuration.id}`)
+          .getByText(
+            `publish · ${configuration.id} · previous ${before.activeVersion}`
+          )
       ).toBeVisible();
       await app.screenshot("iteration-two-published-history");
       await screen.getByRole("link", "Open funnel").tap();
