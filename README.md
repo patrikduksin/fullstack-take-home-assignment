@@ -4,13 +4,15 @@ A clean RAT stack starter for a fullstack take-home assignment. The web app uses
 
 ## Run locally
 
-Use Node 24.18.0 or newer and pnpm 11.3.0. The included `.mise.toml` pins both tools if you use mise.
+Mise is highly recommended for working with this repo. The included `.mise.toml` pins Node 24.18.0 and pnpm 11.3.0 to the toolchain verified for local development, checks, tests, and builds. Using mise ensures you run those exact versions.
 
 ```sh
 mise install
-pnpm install
-pnpm dev
+mise exec -- pnpm install --frozen-lockfile
+mise exec -- pnpm dev
 ```
+
+With mise activated in your shell, you can run `pnpm` directly. Otherwise, use `mise exec --` before the pnpm commands below.
 
 `pnpm dev` runs `alchemy dev` from the workspace root. Alchemy starts the TanStack Start website at http://localhost:3000, the backend Worker at http://localhost:3001, and a local D1 database. The website uses a Cloudflare service binding to reach the backend in development and deployment.
 

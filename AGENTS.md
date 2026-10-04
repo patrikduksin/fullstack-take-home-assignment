@@ -2,7 +2,7 @@
 
 This is a take-home assignment starter based on RAT stack. Product requirements belong in VISION.md when the assignment is available.
 
-Use pnpm 11.3.0 and Node 24.18.0 or newer. Keep dependencies pinned. Run `pnpm check`, `pnpm test`, and `pnpm build` before handing over changes. Never bypass Git hooks.
+Mise is highly recommended: `.mise.toml` pins the verified toolchain to Node 24.18.0 and pnpm 11.3.0. Run `mise install`, then use an activated mise shell or `mise exec --` for pnpm and Git commands that run hooks. Keep dependencies pinned. Run `pnpm check`, `pnpm test`, and `pnpm build` before handing over changes. Never bypass Git hooks.
 
 Define Effect Schema contracts in packages/core, bind handlers with implement, and project them through packages/capability to HTTP, RPC, and MCP. Core owns service ports; database implements adapters; backend provides Layers; web features read atoms from web/client. Browser code imports contracts, never server implementations. Infrastructure belongs in apps/infra and uses Alchemy. Finite domain lifecycles use XState and @xstate/effect when needed.
 

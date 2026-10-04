@@ -7,7 +7,7 @@ description: Set up a fresh Core checkout for local development and verify the w
 
 Read `AGENTS.md` and `README.md`. From the repo root:
 
-1. Use the Node and pnpm versions in `.mise.toml` (`mise install` if available).
+1. Mise is highly recommended to select the exact verified Node and pnpm versions in `.mise.toml`. Run `mise install`, then use an activated mise shell or prefix pnpm commands with `mise exec --`.
 2. Run `pnpm install --frozen-lockfile` and `pnpm skills:install`.
 3. Run `pnpm dev`. Alchemy starts the TanStack Start web app, backend Worker, and local D1; no cloud deployment is needed.
 4. Verify the web app at `http://localhost:3000` and `GET /api/health` on ports 3000 and 3001. Both health responses must report `status: "ok"` and `database: "ready"`.
