@@ -1,8 +1,12 @@
 import { AnswerSchema, FunnelError } from "@core/core/contracts";
 import type { Answer, FunnelStep, SessionView } from "@core/core/contracts";
 import { Effect, Option, Schema } from "effect";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
+import {
+  recordDisplayedStep,
+  startEventDelivery,
+} from "../../client/events.js";
 import {
   startSession,
   loadSession,
@@ -128,6 +132,7 @@ export const Funnel = () => {
   const [answer, setAnswer] = useState<Answer>(null);
   const [pending, setPending] = useState(true);
   const [error, setError] = useState<string>();
+  const displayedVisit = useRef<string | null>(null);
 
   const restore = (next: SessionView) => {
     for (const step of next.configuration.steps) {
@@ -185,6 +190,21 @@ export const Funnel = () => {
       )
     );
   };
+
+  useEffect(startEventDelivery, []);
+
+  useEffect(() => {
+    if (view === undefined) {
+      return;
+    }
+
+    const visit = `${view.session.id}:${view.session.currentStep}:${view.session.routeRevision}`;
+
+    if (displayedVisit.current !== visit) {
+      displayedVisit.current = visit;
+      recordDisplayedStep(view);
+    }
+  }, [view]);
 
   useEffect(() => {
     const id = localStorage.getItem(storageKey);
