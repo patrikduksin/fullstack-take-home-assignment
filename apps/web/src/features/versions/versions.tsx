@@ -66,9 +66,10 @@ export const Versions = () => {
     <main className="mx-auto max-w-3xl space-y-6 px-6 py-12">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-xl font-semibold">Funnel versions</h1>
-        <a className="text-sm underline" href="/">
-          Open funnel
-        </a>
+        <nav className="flex gap-4 text-sm underline">
+          <a href="/internal/analytics">View analytics</a>
+          <a href="/">Open funnel</a>
+        </nav>
       </header>
       <p className="text-muted-foreground text-sm">
         Internal demonstration. Published versions are immutable. Existing

@@ -1,12 +1,26 @@
 import * as Cloudflare from "alchemy/Cloudflare";
 import * as Test from "alchemy/Test/Vitest";
-import { Data, Effect, Random, Schedule } from "effect";
+import { Data, Effect, Random, Schedule, Schema } from "effect";
+import { HttpClient } from "effect/http";
 
 import Stack from "../alchemy.run.js";
 
 class DocumentNotReady extends Data.TaggedError("DocumentNotReady")<{
+  coldPlaceholder?: boolean;
   message: string;
 }> {}
+
+const sessionsApi = Schema.fromJsonString(
+  Schema.Struct({
+    paths: Schema.Struct({
+      "/api/sessions": Schema.Struct({
+        post: Schema.Struct({
+          responses: Schema.Record(Schema.String, Schema.Unknown),
+        }),
+      }),
+    }),
+  })
+);
 
 export const makeTestStack = () => {
   const suffix = Effect.runSync(
@@ -68,6 +82,52 @@ export const makeTestStack = () => {
           new Error("The deployed MCP route is not ready.")
         );
       }
+
+      yield* Effect.gen(function* readySessionApi() {
+        const response = yield* HttpClient.get(
+          `${deployed.websiteUrl}/openapi.json`,
+          {
+            headers: { "cache-control": "no-cache" },
+          }
+        );
+
+        const body = yield* response.text;
+        const contentType = response.headers["content-type"] ?? "";
+
+        if (
+          response.status === 200 &&
+          contentType.includes("application/json")
+        ) {
+          return yield* Schema.decodeEffect(sessionsApi)(body).pipe(
+            Effect.mapError(
+              () =>
+                new DocumentNotReady({
+                  coldPlaceholder: false,
+                  message:
+                    "The OpenAPI schema does not declare session creation.",
+                })
+            )
+          );
+        }
+
+        return yield* new DocumentNotReady({
+          coldPlaceholder:
+            (response.status === 200 || response.status === 404) &&
+            contentType.includes("text/html") &&
+            body.includes("<title>Page not found</title>") &&
+            body.includes("There is nothing here yet"),
+          message: `Session API readiness returned HTTP ${response.status} (${contentType}).`,
+        });
+      }).pipe(
+        Effect.retry({
+          schedule: Schedule.spaced("1 second"),
+          while: (failure) =>
+            failure instanceof DocumentNotReady &&
+            failure.coldPlaceholder === true,
+        }),
+        Effect.timeout("60 seconds"),
+        Effect.orDie
+      );
 
       return deployed;
     }),
