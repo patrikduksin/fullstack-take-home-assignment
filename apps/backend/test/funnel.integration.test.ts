@@ -133,3 +133,44 @@ test(
   }),
   { timeout: 60_000 }
 );
+
+test(
+  "rejects invalid overrides and preserves backend assignments during resume",
+  Effect.gen(function* assignments() {
+    const { websiteUrl } = yield* stack;
+
+    for (const variant of ["", "C", "a"]) {
+      const rejected = yield* HttpClient.post(`${websiteUrl}/api/sessions`, {
+        body: HttpBody.jsonUnsafe({ variant }),
+      });
+
+      expect(rejected.status).toBe(422);
+      expect(yield* rejected.json).toMatchObject({
+        message: "Choose variant A or B for a new session.",
+      });
+    }
+
+    for (const input of [{}, { variant: "A" }, { variant: "B" }]) {
+      const created = yield* HttpClient.post(`${websiteUrl}/api/sessions`, {
+        body: HttpBody.jsonUnsafe(input),
+      });
+
+      const initial = yield* created.json.pipe(Effect.flatMap(decodeView));
+      expect(["A", "B"]).toContain(initial.session.variant);
+
+      if ("variant" in input) {
+        expect(initial.session.variant).toBe(input.variant);
+      }
+
+      const resumed = yield* HttpClient.get(
+        `${websiteUrl}/api/sessions/${initial.session.id}?variant=C`
+      ).pipe(
+        Effect.flatMap((response) => response.json),
+        Effect.flatMap(decodeView)
+      );
+
+      expect(resumed).toEqual(initial);
+    }
+  }),
+  { timeout: 60_000 }
+);
