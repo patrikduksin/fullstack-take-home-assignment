@@ -15,6 +15,7 @@ import { Route as McpRouteImport } from './routes/mcp'
 import { Route as HealthRouteImport } from './routes/health'
 import { Route as DocsRouteImport } from './routes/docs'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as InternalVersionsRouteImport } from './routes/internal.versions'
 import { Route as ApiSplatRouteImport } from './routes/api.$'
 
 const RpcRoute = RpcRouteImport.update({
@@ -47,6 +48,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InternalVersionsRoute = InternalVersionsRouteImport.update({
+  id: '/internal/versions',
+  path: '/internal/versions',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiSplatRoute = ApiSplatRouteImport.update({
   id: '/api/$',
   path: '/api/$',
@@ -61,6 +67,7 @@ export interface FileRoutesByFullPath {
   '/openapi.json': typeof OpenapiDotjsonRoute
   '/rpc': typeof RpcRoute
   '/api/$': typeof ApiSplatRoute
+  '/internal/versions': typeof InternalVersionsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -70,6 +77,7 @@ export interface FileRoutesByTo {
   '/openapi.json': typeof OpenapiDotjsonRoute
   '/rpc': typeof RpcRoute
   '/api/$': typeof ApiSplatRoute
+  '/internal/versions': typeof InternalVersionsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -80,13 +88,29 @@ export interface FileRoutesById {
   '/openapi.json': typeof OpenapiDotjsonRoute
   '/rpc': typeof RpcRoute
   '/api/$': typeof ApiSplatRoute
+  '/internal/versions': typeof InternalVersionsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/docs' | '/health' | '/mcp' | '/openapi.json' | '/rpc' | '/api/$'
+    | '/'
+    | '/docs'
+    | '/health'
+    | '/mcp'
+    | '/openapi.json'
+    | '/rpc'
+    | '/api/$'
+    | '/internal/versions'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/docs' | '/health' | '/mcp' | '/openapi.json' | '/rpc' | '/api/$'
+  to:
+    | '/'
+    | '/docs'
+    | '/health'
+    | '/mcp'
+    | '/openapi.json'
+    | '/rpc'
+    | '/api/$'
+    | '/internal/versions'
   id:
     | '__root__'
     | '/'
@@ -96,6 +120,7 @@ export interface FileRouteTypes {
     | '/openapi.json'
     | '/rpc'
     | '/api/$'
+    | '/internal/versions'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -106,6 +131,7 @@ export interface RootRouteChildren {
   OpenapiDotjsonRoute: typeof OpenapiDotjsonRoute
   RpcRoute: typeof RpcRoute
   ApiSplatRoute: typeof ApiSplatRoute
+  InternalVersionsRoute: typeof InternalVersionsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -152,6 +178,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/internal/versions': {
+      id: '/internal/versions'
+      path: '/internal/versions'
+      fullPath: '/internal/versions'
+      preLoaderRoute: typeof InternalVersionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/$': {
       id: '/api/$'
       path: '/api/$'
@@ -170,6 +203,7 @@ const rootRouteChildren: RootRouteChildren = {
   OpenapiDotjsonRoute: OpenapiDotjsonRoute,
   RpcRoute: RpcRoute,
   ApiSplatRoute: ApiSplatRoute,
+  InternalVersionsRoute: InternalVersionsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

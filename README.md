@@ -114,3 +114,11 @@ Adapted from [joelhooks/rat-stack](https://github.com/joelhooks/rat-stack/tree/c
 New sessions receive A or B from the backend with a proposed equal split. The assignment is stored with the immutable version and survives Back, reload, and reopening. Open `/?variant=A` or `/?variant=B` to force a new session. An existing session keeps its assignment when the URL changes; use **Start new session** to inspect the query-selected variant. Other values are rejected with a validation message.
 
 The fictional `variants-v1.json` configures B's wording, question order, and result CTA. The proposed hypothesis is that a shorter path and clearer result CTA improve result reach per started session, the primary metric. CTA clicks per result viewer are secondary. This initial B fixture demonstrates ordering and clearer wording; a later configured iteration will shorten its route. Synthetic traffic verifies calculations and cannot establish experiment significance.
+
+### Managing versions
+
+Open `/internal/versions` to upload a local JSON configuration, inspect saved versions and activation history, or roll back. Every publication needs a new configuration ID. Validation errors and repeated IDs leave the active version and history unchanged. New sessions use the active version; existing sessions retain their original configuration, assignment, answers, and position.
+
+Publication stores the immutable configuration and activation in one D1 batch. A database trigger updates the active pointer within that transaction. Rollback appends an activation targeting the previous active version and retains every saved configuration. Repeated rollback switches to the prior activation target, including a preceding rollback. History starts with the actual active pointer when version management is introduced; it does not invent earlier activation times.
+
+The capability endpoints are `GET /api/versions`, `POST /api/versions` with `{ "configuration": ... }`, and `POST /api/versions/rollback` with `{}`. This exercise's internal pages have no production authentication.
