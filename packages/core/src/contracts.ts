@@ -85,3 +85,14 @@ export type { VersionState } from "./funnel/version-contracts.js";
 export { EventDeclarationSchema } from "./funnel/configuration.js";
 
 export type { EventDeclaration } from "./funnel/configuration.js";
+
+export {
+  analyticsContract,
+  AnalyticsFilterSchema,
+  AnalyticsReportSchema,
+} from "./funnel/analytics-contracts.js";
+
+export type {
+  AnalyticsFilter,
+  AnalyticsReport,
+} from "./funnel/analytics-contracts.js";
