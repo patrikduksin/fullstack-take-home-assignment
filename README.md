@@ -1,158 +1,194 @@
-# Core
+# Funnel runtime
 
-A clean RAT stack starter for a fullstack take-home assignment. The web app uses TanStack Start with React and server rendering.
+A configuration-driven fictional trail and camp planning demo built with TanStack Start, React, Effect, Cloudflare Workers, and D1. Visitors can answer questions, follow conditional routes, go Back, and resume saved progress. Internal pages publish immutable configurations and compare version, variant, and campaign metrics.
+
+The assignment JSON files were not supplied. The files under `configurations/` are authored fictional replacements. They demonstrate the required behavior and do not represent booking, financial offers, or real customer data.
+
+Repository: [patrikduksin/fullstack-take-home-assignment](https://github.com/patrikduksin/fullstack-take-home-assignment).
+
+On the website, `/` opens the funnel, `/internal/versions` manages publication and rollback, `/internal/analytics` shows the dashboard, and `/health` checks the backend and database. Internal management is unauthenticated within this demonstration's scope.
 
 ## Run locally
 
-Mise is highly recommended for working with this repo. The included `.mise.toml` pins Node 24.18.0 and pnpm 11.3.0 to the toolchain verified for local development, checks, tests, and builds. Using mise ensures you run those exact versions.
+The repository pins Node 24.18.0 and pnpm 11.3.0 through `.mise.toml` and the package manifest.
 
 ```sh
 mise run setup
 mise exec -- pnpm dev
 ```
 
-`mise run setup` installs the pinned tools, workspace dependencies, local agent skills, and Chromium.
+Setup installs the pinned tools, frozen workspace dependencies, project skills, and Chromium. With mise activated, subsequent commands can use `pnpm` directly; otherwise prefix them with `mise exec --`.
 
-With mise activated in your shell, you can run `pnpm` directly. Otherwise, use `mise exec --` before the pnpm commands below.
+Alchemy starts the website, backend Worker, and local D1 database and prints `websiteUrl` and `backendUrl`. Use the website URL for the visitor and operator flows. Local state persists in `.alchemy/`; local development creates no cloud resources. The website reaches the backend through a Cloudflare service binding in both development and deployment.
 
-`pnpm dev` runs `alchemy dev` from the workspace root. Alchemy starts the TanStack Start website, backend Worker, and local D1 database, choosing available ports. Use the reported `websiteUrl` and `backendUrl` outputs. The website uses a Cloudflare service binding to reach the backend in development and deployment.
+## Sessions, routes, and variants
 
-Alchemy manages Worker reloads, Vite HMR, local D1 migrations, and persistent local state under `.alchemy/`. Local development creates no cloud resources. Private workspace packages export their TypeScript sources so Alchemy and Vite can reload changes without a separate build watcher.
+The backend creates a session with the active immutable version and a stable A or B assignment, using a proposed equal split. `/?variant=A` and `/?variant=B` select the variant for a new session. A saved session retains its assignment when the URL changes; use **Start new session** to create the query-selected variant. Other variant values produce a validation error.
 
-## Workspace
+The browser retains the session identifier and unsubmitted edits in site storage. The backend retains accepted answers, current screen, visited history, version, variant, initial attribution, and route revision. Reload and reopening restore the same session within the same browser profile and retained site storage. Cross-device recovery is outside this exercise.
 
-| Package | Directory | Purpose |
-| --- | --- | --- |
-| `@core/web` | `apps/web` | TanStack Start, React, Effect AtomRpc client |
-| `@core/backend` | `apps/backend` | Cloudflare Worker with Effect HTTP API, RPC, and MCP |
-| `@core/infra` | `apps/infra` | Alchemy Cloudflare stack and deployment commands |
-| `@core/core` | `packages/core` | Schema contracts, service ports, and capability handlers |
-| `@core/database` | `packages/database` | Cloudflare D1 adapter, Drizzle schema, and SQL migrations |
-| `@core/capability` | `packages/capability` | Shared contract projections for HTTP, RPC, and MCP |
+Navigation uses the eligible route rather than every configured screen. Conditions support `equals`, `includes`, `gte`, and `lte` over typed answers, with an explicit default for unresolved conditions. Back preserves eligible answers. Changing a branch answer removes answers and history for screens that are no longer eligible. A route revision changes only when the eligible screens or their order change. The server rejects invalid answers and stale navigation from a screen that is no longer current.
 
-Effect 4 owns services, errors, configuration, and resource lifetimes. XState 6 and `@xstate/effect` are available for assignment lifecycles. Alchemy 2 declares cloud resources. Package versions are pinned to the upstream snapshot.
+The proposed experiment hypothesis is that B's shorter route and clearer result CTA improve result reach per started session. Result reach is primary; CTA CTR among result viewers is secondary. Synthetic traffic verifies behavior and calculations; it does not establish experiment significance.
 
-The home page runs a fictional trail-planning funnel from backend JSON. Sessions pin an immutable configuration version and retain accepted answers and navigation in D1. Unsubmitted edits remain in the same browser through reload and reopening. The diagnostic page at `/health` checks the backend and database separately from the visitor flow.
+## Configuration and publication
 
-`configurations/iteration-one/trail.json` and `configurations/iteration-one/camp.json` are the authored first-iteration configurations because the original assignment JSON files were not supplied. Each includes at least six screens, conditional routing, and A/B content. The linear and variant fixtures record the earlier incremental deliveries.
+| File | Role |
+| --- | --- |
+| `configurations/linear-v1.json` | Initial incremental linear fixture |
+| `configurations/variants-v1.json` | Incremental B wording and ordering fixture |
+| `configurations/iteration-one/trail.json` | Seven screens, active-pace supplies branch, A/B content |
+| `configurations/iteration-one/camp.json` | Seven screens, waterside branch, A/B content |
+| `configurations/iteration-two/trail.json` | Eight base screens, hours-based rest branch, actual B preparation removal, declared completion event |
+
+Upload a local JSON file at `/internal/versions`. Each publication requires a new configuration ID. Validation checks supported screen types, stable IDs, answer options and bounds, results and CTAs, transitions, conditions, variants, and event declarations. The base definition and each resolved variant must have at least six configured screens and valid routes to results. Invalid definitions and repeated IDs leave the active version and activation history unchanged.
+
+Variant overrides can change content, start, and navigation. `removeSteps` removes named screens from that variant's resolved configuration. Removed IDs must be known and unique; a variant cannot also override a screen it removes. Authors must explicitly bypass removed screens. Broken incoming destinations, removed starts, too few screens, and retained event declarations referencing removed screens fail validation.
+
+Publication stores the version and activation atomically. New sessions use the active version; existing sessions retain their original definition and position. Rollback activates the preceding activation's target and appends history without deleting either configuration or its sessions. Repeated rollback follows the preceding target, including a preceding rollback. Historical versions and events remain queryable.
+
+The second fictional fixture adds `hours >= 4` routing to a rest screen. A retains preparation; B removes it from both its configuration and route. The new `information_acknowledged` declaration uses the existing generic completion-emission path. Publishing that data needs no database schema change or renderer branch for the new event name.
+
+## Events and durable delivery
+
+The server records one `session_started` event atomically when it creates a session. Resume creates no additional start. Initial attribution captures `utm_source`, `utm_medium`, `utm_campaign`, `utm_term`, and `utm_content`; later URLs do not overwrite it.
+
+Every stored envelope contains `eventId`, `type`, `sessionId`, `clientTimestamp`, `serverTimestamp`, pinned `version` and `variant`, nullable `stepId`, `utm`, and non-sensitive `properties`. The server verifies session metadata, configured step references, and the properties allowed for that event type. Accepted answer values stay in session state and never enter analytics envelopes.
+
+| Built-in event | Meaning and additional client properties |
+| --- | --- |
+| `session_started` | Server-owned session creation |
+| `step_viewed` | A displayed screen, with `routeRevision` |
+| `answer_submitted` | Accepted question submission, with `routeRevision`, without its answer |
+| `step_completed` | Accepted progress, with `routeRevision` and resolved `nextStepId` |
+| `back_clicked` | Accepted Back, with `routeRevision` and `targetStepId` |
+| `result_viewed` | A displayed result, with `routeRevision` |
+| `cta_clicked` | The actual result CTA interaction, with `routeRevision` |
+
+`POST /api/events` accepts `{ "events": [...] }` with 1–100 entries. Every entry gets an indexed `accepted`, `duplicate`, or `rejected` receipt. Malformed neighbors do not discard valid entries. Replaying the same ID and content preserves the original event and server timestamp. Reusing an ID with different validated content rejects the conflict. A persistence failure fails the request so the client can replay the same IDs.
+
+The browser saves each envelope under `funnel-event:pending:<eventId>` before delivery. IDs, client times, attribution, and pinned metadata remain stable across retries. An Effect worker sends batches of up to 20, retries every second, and uses a 30-second request deadline. Leaving the funnel stops that worker; saved pending events remain available on reopening. Accepted and duplicate receipts remove only the captured keys, preserving events queued while a request was in flight. Permanent rejection or a corrupt saved record leaves the pending queue and adds metadata to a bounded journal of the latest 20 rejections, without retaining payload properties or answers.
+
+Additional `eventTypes` belong to their configuration version. Properties support fixed booleans, enumerated values, and configured step references. Declarations restrict emitting screens; free text, sensitive names, unknown screens, duplicates, and built-in-name overrides fail validation. `on: "step_completed"` can emit a fixed boolean, a listed enum value, or a `"source"`/`"target"` step reference. Older pinned sessions retain their original declaration set.
+
+`GET /api/sessions/:id/events` returns immutable envelopes without session answers. Completion validation accepts the pinned configuration's possible branch and default destinations, including delayed earlier-revision events, rather than reconstructing them from current answers.
+
+## Analytics definitions
+
+The dashboard and `GET /api/analytics` filter by optional `version`, `variant`, and initial `campaign`. An empty campaign selects sessions without an initial campaign. Cohorts keep version-specific screens and eligible transitions separate, including A/B comparisons.
+
+Let each set contain distinct session IDs within the selected cohort:
+
+| Metric | Definition |
+| --- | --- |
+| Started | Sessions with `session_started` |
+| Result reach | Started sessions with `result_viewed`, divided by started sessions |
+| CTA CTR | Result-viewing sessions with `cta_clicked`, divided by result-viewing sessions |
+| Step completion | Step viewers with `step_completed`, divided by step viewers |
+| Edge conversion | Sessions with a source completion to that destination and a target view at or after it in the same route revision, divided by sessions with that resolved source completion |
+| Snapshot drop-off | The relevant denominator minus completed or converted sessions at the captured snapshot |
+
+Repeated views, Back, and replay add each session once per displayed cohort, step, or edge. Skipped destinations contribute no eligible sessions. Historical revisions retain their observations when answers change. Edge chronology uses client action timestamps within a revision, so target-view and completion receipt order can be reversed without changing the final metric. Server receipt timestamps remain immutable audit data.
+
+A zero denominator returns `null` and displays **Unavailable** with the underlying counts. Snapshot drop-off means incomplete observed progress, not permanent abandonment. Result screens have no completed transition; use result reach and CTA CTR for terminal engagement. Aggregates expose no answer values or session identifiers.
+
+## Real synthetic traffic
+
+From the repository root, run the endpoint-driven generator against a running website:
+
+```sh
+pnpm traffic "$WEBSITE_URL" --seed 20261004
+```
+
+The `traffic` script uses pinned `tsx` 4.23.15. Set `WEBSITE_URL` to Alchemy's reported website URL. The command creates 120 fictional sessions across both variants, two configurations, and two unique initial campaigns. It publishes one unique camp version and rolls back to the original active version. It exercises branches, varied stopping points, repeat views, duplicate IDs, conflicting ID reuse, replayed batches, and reordered delivery through real APIs. It preserves existing data and reports its run ID, campaign names, version IDs, actual times, manual references, and query results.
+
+| Run cohort                    | Started | Results reached | CTA clickers |
+| ----------------------------- | ------: | --------------: | -----------: |
+| Explore campaign              |      80 |              32 |           24 |
+| Direct campaign               |      40 |              24 |           16 |
+| Combined generated population |     120 |              56 |           40 |
+
+These are the independently specified expected counts, not a claim about all records already in a deployment. Filter the dashboard using the command's returned campaign and version IDs. Unrelated existing sessions remain present. The command verifies summaries, each step and edge, variant/version/campaign filters, empty rates, and replay against its manual references before reporting a match.
+
+## Data model and source layout
+
+| D1 table | Stored behavior |
+| --- | --- |
+| `funnel_versions` | Immutable version ID, configuration JSON, creation time |
+| `funnel_active` | One active version for new sessions |
+| `funnel_activations` | Ordered initial, publish, and rollback targets with previous version and activation time |
+| `funnel_sessions` | Stable version and variant, accepted session state, creation/update times |
+| `funnel_events` | Unique append-only event IDs, envelope metadata, properties, original receipt times |
+
+Configuration and APIs call a screen a **step**, represented by `configuration.steps`, `stepId`, and `FunnelStep`.
+
+The domain modules under `packages/core/src/funnel/` keep complete rules together: `configuration.ts` defines and validates configuration, `route.ts` resolves and prunes routes, `session.ts` accepts navigation, `versions.ts` handles activation, `events.ts` validates intake, and `analytics.ts` aggregates distinct session sets. `packages/database/src/funnel*.ts` implements their D1 persistence. `packages/database/src/schema.ts` defines tables; generated migrations and metadata live under `packages/database/migrations/`.
+
+`apps/web/src/client/events.ts` owns durable delivery and configured emission. Features under `apps/web/src/features/` compose the funnel, versions page, and analytics page from the existing shadcn components. `apps/backend` projects shared capability contracts into HTTP, RPC, and MCP. `apps/infra` owns the Alchemy website, Worker, database, and test-stack wiring. Browser modules import contracts rather than server handlers.
+
+Generate database changes with `pnpm --filter @core/database generate` and commit SQL plus Drizzle metadata. Preserve published SQL and immutable configuration records. Alchemy applies the same migrations locally and on deployment. [GLOSSARY.md](GLOSSARY.md) records domain vocabulary; [AGENTS.md](AGENTS.md) records repository rules.
 
 ## Interfaces
 
-The web app forwards these endpoints to the backend. Both origins expose the same interfaces locally.
+The website forwards capabilities to its backend service binding.
 
-| Endpoint            | Purpose                                    |
-| ------------------- | ------------------------------------------ |
-| `GET /api/health`   | Database readiness                         |
-| `/rpc`              | Schema-derived Effect RPC                  |
-| `/mcp`              | Streamable HTTP MCP with the `health` tool |
-| `GET /openapi.json` | Generated OpenAPI specification            |
-| `GET /docs`         | API reference                              |
+| Interface | Purpose |
+| --- | --- |
+| `POST /api/sessions` | Create a pinned session with optional variant and attribution |
+| `GET /api/sessions/:id` | Resume its original definition and accepted state |
+| `POST /api/sessions/:id/advance` | Validate `{ "stepId": ..., "answer": ... }` and advance |
+| `POST /api/sessions/:id/back` | Return to visited eligible history |
+| `GET /api/versions`, `POST /api/versions`, `POST /api/versions/rollback` | Inspect, publish, and roll back |
+| `POST /api/events`, `GET /api/sessions/:id/events` | Ingest and inspect immutable events |
+| `GET /api/analytics` | Filtered version, variant, and campaign aggregates |
+| `GET /api/health` | Database readiness |
+| `/rpc`, `/mcp` | Shared schema-derived RPC and MCP projections |
+| `GET /openapi.json`, `GET /docs` | Generated API specification and reference |
 
-```sh
-# Set WEBSITE_URL to the websiteUrl reported by Alchemy.
-curl "$WEBSITE_URL/api/health"
-```
+MCP supports protocol versions 2025-06-18, 2025-03-26, and 2024-11-05. Its initialization and subsequent session requests share one Durable Object because the protocol session map is in memory. If that object restarts, a client must initialize again after an expired session returns 404. HTTP and RPC requests go directly to the backend Worker.
 
-Connect an MCP client to `/mcp` on the reported `websiteUrl`. The server supports MCP protocol versions 2025-06-18, 2025-03-26, and 2024-11-05, including initialization and session headers.
-
-MCP requests share one Durable Object because Effect keeps these protocol sessions in memory. This keeps initialization and later tool calls on the same instance across backend Worker isolates. Sessions expire when the object restarts; clients must initialize again after a session returns 404. HTTP and RPC requests go directly to the backend Worker.
-
-## Add assignment behavior
-
-Define input, output, and failure schemas in `packages/core/src/contracts.ts`. Implement a capability and register it in `packages/core/src/index.ts`. The backend projects the capability list into all three interfaces. Keep provider adapters in `packages/database` or another adapter package and supply their Layers in the backend.
-
-Browser features read atoms from `apps/web/src/client`. Browser code imports contracts and the contract-only RPC projection. Server implementations remain outside browser modules.
-
-Add SQLite tables to `packages/database/src/schema.ts` with Drizzle, then generate migrations:
-
-```sh
-pnpm --filter @core/database generate
-```
-
-Commit the generated SQL and Drizzle metadata. Alchemy applies the same SQL to local D1 during development and Cloudflare D1 during deployment. The initial migration creates the funnel version, active pointer, and session tables and seeds a complete fictional configuration.
-
-## Validate
+## Checks, test evidence, and review
 
 ```sh
 pnpm check
 pnpm test
 ```
 
-See the [testing skill](skills/testing/SKILL.md) for test policy, commands, and prerequisites.
+Lefthook runs checks and unit tests on every commit; never bypass hooks. Full handover and completed task PRs require both commands above. The full suite uses real Cloudflare test stages and D1 databases plus browser journeys, retains reports and screenshots, and cleans only its owned ephemeral stacks. The persistent public demonstration stage is separate and retains its historical data.
 
-Lefthook runs `pnpm check` and `pnpm test:unit` on every commit. This keeps intermediate commits checked without redeploying remote stacks after each small change. Before marking a task PR ready or handing over the completed work, run both `pnpm check` and `pnpm test` and retain the real API and browser artifacts. Never bypass Git hooks.
+`pnpm test` starts API and browser suites together after units. The remote wrapper waits for both suites, including cleanup, and fails if either fails. API files use two workers with independent stages; browser journeys stay serial. Ignored per-build output under `apps/web/dist/test-<build-process-id>` prevents one Vite build from clearing assets another stack is uploading. One recorded local comparison reduced the full suite from 409.42 to 167.31 seconds, about 59% shorter. That is measured evidence rather than a timing guarantee. Read-only document, health, MCP, and actual OpenAPI readiness checks distinguish Cloudflare's cold placeholder from the application before mutations. Mutations are not retried blindly.
 
-After unit tests pass, `pnpm test` starts the API and browser suites together. `scripts/test-remote.sh` waits for both suites to finish, including cleanup, and returns a failure if either failed. Remote API suites use two concurrent workers, each with its own Cloudflare stage and D1 database; browser journeys remain serial. Test builds write to `apps/web/dist/test-<build-process-id>` so one Vite build cannot clear assets another stack is uploading. These ignored build directories remain available until local cleanup; normal development and deployment use `dist`.
-
-The fence includes strict TypeScript, Effect compiler diagnostics, Ultracite/Oxlint, architecture rules, Oxfmt, and Lefthook pre-commit checks. Checks and unit tests run through pnpm workspace scripts; integration and browser suites use their owning packages, with a shared Alchemy harness in `@core/infra`. The generated TanStack route tree is checked into Git so a fresh checkout can typecheck. TanStack Start updates it during Alchemy dev and deployment; include those updates when changing routes. Type checking checks every workspace and the root tooling. Alchemy builds deployment bundles when it deploys the Stack. `pnpm fix` applies safe lint fixes and formatting. CI installs from the frozen lockfile and runs checks and tests.
-
-## Cloudflare deployment
-
-I chose Cloudflare because I already have an account and can deploy the assignment there easily. Alchemy keeps infrastructure in code, and core service ports separate domain logic from hosting and database adapters. If another provider is preferred, we can target Hetzner, AWS, or GCP by replacing the Cloudflare resource declarations, Worker runtime wiring, and D1 adapter while retaining the domain contracts and handlers. An agent can work from a single migration prompt to update the infrastructure and adapters, then verify the result on the target provider.
-
-Configure an Alchemy Cloudflare profile with `pnpm exec alchemy profile edit --add Cloudflare`. Then review the plan before deploying:
+For a directly selected public compatibility journey from `apps/web`, use the runner's collection selector rather than the ephemeral-stack wrapper:
 
 ```sh
-pnpm infra:plan
-pnpm infra:deploy
+APP_URL="$WEBSITE_URL" E2E_TEST_FILE=test/e2e/iteration-two.e2e.ts pnpm exec e2e run --output /tmp/funnel-public-iteration-two --trace on --video on
 ```
 
-The stack creates a TanStack Start website, a private backend Worker, and D1. The website reaches the backend through a service binding. No custom domain or existing Cloudflare resource is assumed. Deployment is not required for local development.
+This journey publishes a unique copy of the fictional fixture and rolls back once, preserving the old B session and new A/B sessions. It does not seed or delete the persistent traffic population. It must run after first-iteration acceptance.
 
-## Source
+The native GitHub stack is #19, currently ordered #12 → #13 → #16 → #15 → #18 → #17 → #21 → #20 → #30 → #31 → #29. Task PRs carry local API/browser evidence, artifact downloads, and UI screenshots. [Integration PR #14](https://github.com/patrikduksin/fullstack-take-home-assignment/pull/14) provides the combined change against `main`; it is separate from the per-task stack. The requested deliverable is reviewable PRs.
 
-Project skills are maintained in root [`skills/`](skills): `setup`, `testing`, `add-a-capability`, `add-a-lifecycle-machine`, `learn-alchemy`, and `uncomplect`. Setup and testing describe Core workflows; the other four are adapted from RAT stack.
+The repository's Cloudflare Actions secrets are missing: `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN`. Local verification uses the working Cloudflare profile. The user accepted local evidence with this CI limitation; CI still runs the required tests. Local OAuth credentials are not transferred to GitHub. See the [observed CI failure](https://github.com/patrikduksin/fullstack-take-home-assignment/actions/runs/37179622508).
 
-After cloning, install them for Codex from their local source with the Skills CLI:
+## Deployment and actual chronology
+
+Cloudflare Workers and D1 are the accepted runtime and storage for this exercise. Alchemy declares the infrastructure. Configure a Cloudflare profile with `pnpm exec alchemy profile edit --add Cloudflare`, then inspect the current plan before deployment:
 
 ```sh
-pnpm skills:install
+pnpm infra:plan --stage assignment-demo --detailed --no-input
+pnpm infra:deploy --stage assignment-demo --no-input
 ```
 
-Edit `skills/` and rerun the command after changes. Installed copies in `.agents/skills` are generated and ignored; `skills-lock.json` tracks the local source. [AGENTS.md](AGENTS.md) contains the repository rules.
+The persistent stage creates the public website, private backend Worker, D1, and required bindings. The backend has no public workers.dev origin; public API checks use the website. Keep the reported website URL and persistent records after smoke checks. Deployment is separate from local development.
 
-Adapted from [joelhooks/rat-stack](https://github.com/joelhooks/rat-stack/tree/c7d11aa396dad097ecb41a3f316cc905f6037063), following its [keep-or-cut guide](https://ratstack.sh/skills/keep-or-cut). The retained capability projections, lint rules, and projection tests originate there. The MIT license is preserved.
+| Milestone                                 | Actual UTC time         |
+| ----------------------------------------- | ----------------------- |
+| Original agreed assignment start          | Not supplied            |
+| Complete local first-iteration acceptance | 2026-10-04 08:20:53 UTC |
+| First local second-iteration publication  | 2026-10-04 08:23:49 UTC |
 
-### Variant review
+The complete local second-iteration checks passed at 2026-10-04 08:35:41 UTC. These times come from retained reports and activation history. Incremental commits and earlier command-line traffic milestones are not full first-iteration acceptance. The original 48-hour start was not provided, so it is not inferred from implementation activity.
 
-New sessions receive A or B from the backend with a proposed equal split. The assignment is stored with the immutable version and survives Back, reload, and reopening. Open `/?variant=A` or `/?variant=B` to force a new session. An existing session keeps its assignment when the URL changes; use **Start new session** to inspect the query-selected variant. Other values are rejected with a validation message.
+## Repository provenance
 
-The fictional `variants-v1.json` configures B's wording, question order, and result CTA. The proposed hypothesis is that a shorter path and clearer result CTA improve result reach per started session, the primary metric. CTA clicks per result viewer are secondary. This initial B fixture demonstrates ordering and clearer wording; a later configured iteration will shorten its route. Synthetic traffic verifies calculations and cannot establish experiment significance.
-
-## Analytics event intake
-
-Session creation captures initial `utm_source`, `utm_medium`, `utm_campaign`, `utm_term`, and `utm_content` from the browser URL. D1 records one `session_started` envelope atomically with that session. Resume keeps its original attribution and does not create another start event.
-
-`POST /api/events` accepts `{ "events": [...] }` with 1–100 entries. Every entry receives an indexed `accepted`, `duplicate`, or `rejected` result. Malformed neighbors do not discard valid envelopes. Each envelope contains `eventId`, `type`, `sessionId`, `clientTimestamp`, pinned `version` and `variant`, nullable `stepId`, `utm`, and allowlisted `properties`. Receipt timestamps come from D1 and remain unchanged on replay. Reusing an ID with different validated content is rejected. A persistence failure fails the request so clients can safely replay the same IDs.
-
-The built-in types are `session_started`, `step_viewed`, `answer_submitted`, `step_completed`, `back_clicked`, `result_viewed`, and `cta_clicked`. Client step events require a nonnegative `routeRevision`; completions also include `nextStepId`, and Back includes `targetStepId`. The server validates the pinned session, step references, attribution, and event-specific fields. Session-start events are server-owned. Analytics envelopes never contain raw answers. `GET /api/sessions/:id/events` reads stored immutable envelopes without exposing session answers.
-
-### Managing versions
-
-Open `/internal/versions` to upload a local JSON configuration, inspect saved versions and activation history, or roll back. Every publication needs a new configuration ID. Validation errors and repeated IDs leave the active version and history unchanged. New sessions use the active version; existing sessions retain their original configuration, assignment, answers, and position.
-
-Publication stores the immutable configuration and activation in one D1 batch. A database trigger updates the active pointer within that transaction. Rollback appends an activation targeting the previous active version and retains every saved configuration. Repeated rollback switches to the prior activation target, including a preceding rollback. History starts with the actual active pointer when version management is introduced; it does not invent earlier activation times.
-
-The capability endpoints are `GET /api/versions`, `POST /api/versions` with `{ "configuration": ... }`, and `POST /api/versions/rollback` with `{}`. This exercise's internal pages have no production authentication.
-
-A configuration may declare additional `eventTypes`. Declarations choose permitted `stepIds` and required properties with `kind: "boolean"`, `kind: "enum"` plus fixed `values`, or `kind: "step"` for configured step references. Free text properties are not supported. Built-in names, duplicate declarations, unknown steps, sensitive property names, and ambiguous enum values fail publication. Older sessions continue using their original declaration set.
-
-For automatic completion events, set `on: "step_completed"` and provide each property's `emit`: a fixed boolean, a listed enum value, or `"source"`/`"target"` for a step reference. This lets a configuration introduce `information_acknowledged` on an information screen without hardcoding its name in the browser. Completed transition envelopes accept any configured branch or default destination, including delayed events from an earlier route revision; they are not compared with the session's current answers.
-
-The browser persists each pending envelope under `funnel-event:pending:<eventId>` in localStorage before attempting delivery. Event IDs, client timestamps, pinned metadata, and initial attribution remain unchanged across retries and reopening. An Effect fiber owned by the funnel retries pending batches of up to 20 envelopes every second with a 30-second request deadline; leaving the page interrupts that worker. Accepted and duplicate receipts remove only their captured event keys, preserving entries added during an in-flight request. Permanent rejections and corrupt records leave the pending queue and add metadata to `funnel-event:rejected`, a journal bounded to the latest 20 entries. The journal excludes event properties and answers.
-
-Accepted Continue and Back operations record their source, destination, and route revision without copying answers. Screen visits and result views record once per visit. A result CTA records synchronously before its ordinary link navigation; pending events remain available when the browser reopens.
-
-### Reading funnel analytics
-
-Open `/internal/analytics` to filter by immutable version, A/B assignment, and initial campaign. The dashboard compares variants within separate version rows and opens each campaign cohort's steps and eligible transitions. `GET /api/analytics` accepts the same optional `version`, `variant`, and `campaign` query fields; an empty campaign selects sessions without an initial campaign.
-
-All metrics count distinct sessions. Step completion divides viewers who completed by viewers. A branch edge's denominator contains sessions with a recorded completion to that destination; conversion requires a target view at or after that completion in the same route revision. Delayed receipt order does not change the logical sequence. Repeated views and historical revisits count each session once, while skipped destinations add no eligible sessions.
-
-Result reach divides started sessions with a result view by started sessions. CTA CTR divides result viewers with a CTA click by result viewers. A zero denominator returns `null` and displays **Unavailable**. Observed drop-off is the denominator minus converted sessions at the captured snapshot. Result screens have no completed transition; use result reach and CTA CTR for terminal engagement. Aggregates retain historical configurations and events and expose no answer values or session identifiers.
-
-### Fictional traffic acceptance
-
-Run `pnpm traffic https://YOUR-WEBSITE.workers.dev --seed 20261004` against the website origin while `trail-branches-v1` is active. The finite sample creates 120 real sessions across trail and one uniquely published camp copy, both variants and two new initial campaigns. It restores trail with one guarded rollback and retains all sessions, events and configurations. Each run gets fresh campaign names; seed controls reproducible ordering and harmless numeric answers.
-
-The independent reference expects 56 result viewers and 40 CTA clickers. Explore has 80 starts, 32 results and 24 clickers; direct has 40 starts, 24 results and 16 clickers. The job checks every campaign/version/variant step and eligible transition, real Back edits, delayed delivery, repeated actions, duplicate replay and conflicting IDs against hand-worked counts. JSON output records the cohort/version mapping, expected tables, observed dashboard snapshots, actual acceptance time and restoration outcome. These fictional populations verify arithmetic, not statistical significance. Unsupported active versions fail before traffic; the job checks the latest activation before rollback and refuses cleanup when another activation is observed. A failed run retains partial records and exits unsuccessfully rather than retrying session mutations or deleting evidence.
+Project skills live in [`skills/`](skills); run `pnpm skills:install` after editing their sources. Installed `.agents/skills` copies are generated. The project is adapted from [joelhooks/rat-stack](https://github.com/joelhooks/rat-stack/tree/c7d11aa396dad097ecb41a3f316cc905f6037063), retaining its MIT license, capability projections, and lint conventions.
