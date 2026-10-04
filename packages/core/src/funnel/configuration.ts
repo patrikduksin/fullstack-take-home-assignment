@@ -73,6 +73,7 @@ const StepOverrideSchema = Schema.Struct({
 
 const VariantOverrideSchema = Schema.Struct({
   name: Schema.optional(Schema.String),
+  removeSteps: Schema.optional(Schema.Array(FunnelStepSchema.fields.id)),
   start: Schema.optional(Schema.String),
   steps: Schema.optional(Schema.Record(Schema.String, StepOverrideSchema)),
 });
@@ -134,25 +135,27 @@ export const resolveVariant = (
     ...base,
     name: override?.name ?? base.name,
     start: override?.start ?? base.start,
-    steps: base.steps.map((step) => {
-      const replacement = override?.steps?.[step.id];
+    steps: base.steps
+      .filter((step) => !(override?.removeSteps ?? []).includes(step.id))
+      .map((step) => {
+        const replacement = override?.steps?.[step.id];
 
-      const resolved = {
-        ...step,
-        ...replacement,
-        title: replacement?.title ?? step.title,
-      };
+        const resolved = {
+          ...step,
+          ...replacement,
+          title: replacement?.title ?? step.title,
+        };
 
-      if (replacement?.transition !== undefined) {
-        delete resolved.next;
-      }
+        if (replacement?.transition !== undefined) {
+          delete resolved.next;
+        }
 
-      if (replacement?.next !== undefined) {
-        delete resolved.transition;
-      }
+        if (replacement?.next !== undefined) {
+          delete resolved.transition;
+        }
 
-      return resolved;
-    }),
+        return resolved;
+      }),
   };
 };
 
@@ -567,7 +570,8 @@ export const validateResolvedConfiguration = Effect.fn(
     }
   }
 
-  const error = graphError(configuration);
+  const error =
+    graphError(configuration) ?? eventDeclarationsError(configuration);
 
   if (error !== undefined) {
     return yield* new ConfigurationInvalid({ message: error });
@@ -595,9 +599,31 @@ export const validateConfiguration = flow(
       const ids = new Set(configuration.steps.map((step) => step.id));
 
       for (const variant of ["A", "B"] as const) {
+        const removed = configuration.variants?.[variant]?.removeSteps ?? [];
+
+        if (new Set(removed).size !== removed.length) {
+          return yield* new ConfigurationInvalid({
+            message: `Variant ${variant} removed step IDs must be unique.`,
+          });
+        }
+
+        for (const id of removed) {
+          if (!ids.has(id)) {
+            return yield* new ConfigurationInvalid({
+              message: `Variant ${variant} removes missing step ${id}.`,
+            });
+          }
+        }
+
         for (const [id, override] of Object.entries(
           configuration.variants?.[variant]?.steps ?? {}
         )) {
+          if (removed.includes(id)) {
+            return yield* new ConfigurationInvalid({
+              message: `Variant ${variant} cannot remove and override step ${id}.`,
+            });
+          }
+
           if (
             override.next !== undefined &&
             override.transition !== undefined
