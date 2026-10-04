@@ -71,3 +71,102 @@ test(
   }),
   { timeout: 60_000 }
 );
+
+test(
+  "isolates malformed neighbors and preserves the first envelope through retries and conflicts",
+  Effect.gen(function* retrySafeBatch() {
+    const { websiteUrl } = yield* stack;
+
+    const created = yield* HttpClient.post(`${websiteUrl}/api/sessions`, {
+      body: HttpBody.jsonUnsafe({
+        utm: { campaign: "replay-test", source: "test" },
+        variant: "A",
+      }),
+    });
+
+    const view = yield* created.json.pipe(
+      Effect.flatMap(Schema.decodeUnknownEffect(SessionViewSchema))
+    );
+
+    const url = `${websiteUrl}/api/events`;
+
+    const event = {
+      clientTimestamp: "2026-10-04T06:00:00.000Z",
+      eventId: `view:${view.session.id}`,
+      properties: { routeRevision: 0 },
+      sessionId: view.session.id,
+      stepId: "welcome",
+      type: "step_viewed",
+      utm: { campaign: "replay-test", source: "test" },
+      variant: view.session.variant,
+      version: view.session.version,
+    };
+
+    const batch = {
+      events: [
+        event,
+        null,
+        { ...event, utm: { campaign: "replay-test", source: "test" } },
+        { ...event, clientTimestamp: "2026-10-04T07:00:00.000Z" },
+      ],
+    };
+
+    const first = yield* HttpClient.post(url, {
+      body: HttpBody.jsonUnsafe(batch),
+    });
+
+    expect(first.status).toBe(200);
+    const received = yield* first.json;
+    expect(received).toMatchObject({
+      results: [
+        { eventId: event.eventId, index: 0, status: "accepted" },
+        { index: 1, status: "rejected" },
+        { eventId: event.eventId, index: 2, status: "duplicate" },
+        { eventId: event.eventId, index: 3, status: "rejected" },
+      ],
+    });
+
+    const persisted = yield* HttpClient.get(
+      `${websiteUrl}/api/sessions/${view.session.id}/events`
+    ).pipe(
+      Effect.flatMap((response) => response.json),
+      Effect.flatMap(
+        Schema.decodeUnknownEffect(Schema.Array(StoredFunnelEventSchema))
+      )
+    );
+
+    expect(persisted).toHaveLength(2);
+    expect(
+      persisted.find((candidate) => candidate.eventId === event.eventId)
+    ).toMatchObject(event);
+
+    const replay = yield* HttpClient.post(url, {
+      body: HttpBody.jsonUnsafe(batch),
+    });
+
+    expect(replay.status).toBe(200);
+    expect(yield* replay.json).toMatchObject({
+      results: [
+        { index: 0, status: "duplicate" },
+        { index: 1, status: "rejected" },
+        { index: 2, status: "duplicate" },
+        { index: 3, status: "rejected" },
+      ],
+    });
+
+    const after = yield* HttpClient.get(
+      `${websiteUrl}/api/sessions/${view.session.id}/events`
+    ).pipe(Effect.flatMap((response) => response.json));
+
+    expect(after).toEqual(persisted);
+    expect(
+      (yield* HttpClient.post(url, { body: HttpBody.jsonUnsafe({}) })).status
+    ).toBe(400);
+    expect(
+      (yield* HttpClient.post(url, {
+        body: HttpBody.jsonUnsafe({ events: "bad" }),
+      })).status
+    ).toBe(400);
+  }),
+  { timeout: 60_000 }
+);

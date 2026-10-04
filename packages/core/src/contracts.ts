@@ -59,3 +59,14 @@ export type {
   FunnelEvent,
   StoredFunnelEvent,
 } from "./funnel/contracts.js";
+
+export {
+  EventReceiptSchema,
+  ingestEventsContract,
+} from "./funnel/contracts.js";
+
+export type { EventReceipt } from "./funnel/contracts.js";
+
+export { BuiltinEventTypeSchema } from "./funnel/configuration.js";
+
+export type { BuiltinEventType } from "./funnel/configuration.js";

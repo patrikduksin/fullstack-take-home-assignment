@@ -5,7 +5,10 @@ import { AnswerSchema, FunnelConfigurationSchema } from "./configuration.js";
 
 export class FunnelError extends Schema.TaggedError<FunnelError>()(
   "FunnelError",
-  { message: Schema.String }
+  {
+    message: Schema.String,
+    reason: Schema.optional(Schema.Literal("session_not_found")),
+  }
 ) {}
 
 const AttributionValue = Schema.String.check(Schema.isMaxLength(256));
@@ -114,4 +117,28 @@ export const loadSessionEventsContract = defineContract("loadSessionEvents", {
   http: { method: "GET", path: "/sessions/:id/events" },
   input: Schema.Struct({ id: Schema.String }),
   output: Schema.Array(StoredFunnelEventSchema),
+});
+
+export const EventReceiptSchema = Schema.Struct({
+  error: Schema.optional(Schema.String),
+  eventId: Schema.optional(Schema.String),
+  index: Schema.Int.check(Schema.isGreaterThanOrEqualTo(0)),
+  serverTimestamp: Schema.optional(Schema.String),
+  status: Schema.Literals(["accepted", "duplicate", "rejected"]),
+});
+
+export type EventReceipt = typeof EventReceiptSchema.Type;
+
+export const ingestEventsContract = defineContract("ingestEvents", {
+  annotations: { idempotent: true },
+  description: "Validate each analytics envelope and append it once",
+  failure: FunnelError,
+  http: { method: "POST", path: "/events" },
+  input: Schema.Struct({
+    events: Schema.Array(Schema.Unknown).check(
+      Schema.isMinLength(1),
+      Schema.isMaxLength(100)
+    ),
+  }),
+  output: Schema.Struct({ results: Schema.Array(EventReceiptSchema) }),
 });

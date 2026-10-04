@@ -36,6 +36,7 @@ export const d1FunnelSessions = (
     if (row === null) {
       return yield* new FunnelError({
         message: "Your saved session could not be found. Start a new session.",
+        reason: "session_not_found",
       });
     }
 

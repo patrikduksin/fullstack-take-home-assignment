@@ -143,3 +143,15 @@ export const answerError = (
     }
   }
 };
+
+export const BuiltinEventTypeSchema = Schema.Literals([
+  "session_started",
+  "step_viewed",
+  "answer_submitted",
+  "step_completed",
+  "back_clicked",
+  "result_viewed",
+  "cta_clicked",
+]);
+
+export type BuiltinEventType = typeof BuiltinEventTypeSchema.Type;
