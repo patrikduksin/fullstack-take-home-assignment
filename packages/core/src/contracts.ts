@@ -46,3 +46,13 @@ export type {
   FunnelConfiguration,
   FunnelStep,
 } from "./funnel/configuration.js";
+
+export {
+  listVersionsContract,
+  publishVersionContract,
+  rollbackVersionContract,
+  VersionError,
+  VersionStateSchema,
+} from "./funnel/version-contracts.js";
+
+export type { VersionState } from "./funnel/version-contracts.js";

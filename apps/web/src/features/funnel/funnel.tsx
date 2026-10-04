@@ -223,6 +223,12 @@ export const Funnel = () => {
           Start new session
         </Button>
       </header>
+      <a
+        className="text-muted-foreground text-sm underline"
+        href="/internal/versions"
+      >
+        Manage versions
+      </a>
       {error !== undefined && (
         <div
           role="alert"
