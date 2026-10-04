@@ -22,9 +22,59 @@ export const AnalyticsSummarySchema = Schema.Struct({
 
 export type AnalyticsSummary = typeof AnalyticsSummarySchema.Type;
 
-export const AnalyticsReportSchema = Schema.Struct({
-  capturedAt: Schema.String,
+export const StepAnalyticsSchema = Schema.Struct({
+  completers: Schema.Int,
+  completionRate: Schema.NullOr(Schema.Finite),
+  dropOff: Schema.Int,
+  stepId: Schema.String,
+  terminal: Schema.Boolean,
+  title: Schema.String,
+  viewers: Schema.Int,
+});
+
+export type StepAnalytics = typeof StepAnalyticsSchema.Type;
+
+export const EdgeAnalyticsSchema = Schema.Struct({
+  conversionRate: Schema.NullOr(Schema.Finite),
+  converted: Schema.Int,
+  dropOff: Schema.Int,
+  eligible: Schema.Int,
+  sourceStepId: Schema.String,
+  targetStepId: Schema.String,
+});
+
+export type EdgeAnalytics = typeof EdgeAnalyticsSchema.Type;
+
+export const AnalyticsCohortSchema = Schema.Struct({
+  campaign: Schema.NullOr(Schema.String),
+  edges: Schema.Array(EdgeAnalyticsSchema),
+  name: Schema.String,
+  steps: Schema.Array(StepAnalyticsSchema),
   summary: AnalyticsSummarySchema,
+  variant: Schema.Literals(["A", "B"]),
+  version: Schema.String,
+});
+
+export type AnalyticsCohort = typeof AnalyticsCohortSchema.Type;
+
+export const VariantComparisonSchema = Schema.Struct({
+  name: Schema.String,
+  summary: AnalyticsSummarySchema,
+  variant: Schema.Literals(["A", "B"]),
+  version: Schema.String,
+});
+
+export type VariantComparison = typeof VariantComparisonSchema.Type;
+
+export const AnalyticsReportSchema = Schema.Struct({
+  campaigns: Schema.Array(Schema.NullOr(Schema.String)),
+  capturedAt: Schema.String,
+  cohorts: Schema.Array(AnalyticsCohortSchema),
+  comparisons: Schema.Array(VariantComparisonSchema),
+  summary: AnalyticsSummarySchema,
+  versions: Schema.Array(
+    Schema.Struct({ name: Schema.String, version: Schema.String })
+  ),
 });
 
 export type AnalyticsReport = typeof AnalyticsReportSchema.Type;

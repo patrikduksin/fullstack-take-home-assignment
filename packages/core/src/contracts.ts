@@ -96,3 +96,12 @@ export type {
   AnalyticsFilter,
   AnalyticsReport,
 } from "./funnel/analytics-contracts.js";
+
+export type {
+  AnalyticsCohort,
+  AnalyticsSummary,
+  EdgeAnalytics,
+  StepAnalytics,
+} from "./funnel/analytics-contracts.js";
+
+export type { VariantComparison } from "./funnel/analytics-contracts.js";
