@@ -1,7 +1,7 @@
 import { implement } from "@core/capability/implement";
-import { Context, Effect } from "effect";
+import { Context, Effect, Schema } from "effect";
 
-import { answerError } from "./configuration.js";
+import { answerError, VariantSchema } from "./configuration.js";
 import {
   advanceSessionContract,
   backSessionContract,
@@ -9,19 +9,39 @@ import {
   FunnelError,
   loadSessionContract,
 } from "./contracts.js";
-import type { FunnelSession, SessionView } from "./contracts.js";
+import type {
+  CreateSessionInput,
+  FunnelSession,
+  SessionView,
+} from "./contracts.js";
 
 export class FunnelSessions extends Context.Service<
   FunnelSessions,
   {
-    readonly create: Effect.Effect<SessionView, FunnelError>;
+    readonly create: (
+      input: CreateSessionInput
+    ) => Effect.Effect<SessionView, FunnelError>;
     readonly load: (id: string) => Effect.Effect<SessionView, FunnelError>;
     readonly save: (session: FunnelSession) => Effect.Effect<void, FunnelError>;
   }
 >()("@core/core/funnel/FunnelSessions") {}
 
-const createSession = implement(createSessionContract, () =>
-  FunnelSessions.use((sessions) => sessions.create)
+const createSession = implement(
+  createSessionContract,
+  Effect.fn("createSession")(function* createSession(input) {
+    if (
+      input.variant !== undefined &&
+      !Schema.is(VariantSchema)(input.variant)
+    ) {
+      return yield* new FunnelError({
+        message: "Choose variant A or B for a new session.",
+      });
+    }
+
+    const sessions = yield* FunnelSessions;
+
+    return yield* sessions.create(input);
+  })
 );
 
 const loadSession = implement(loadSessionContract, ({ id }) =>

@@ -7,7 +7,7 @@ test("completes a configured funnel and restores drafts and accepted answers", a
   browser,
   screen,
 }) => {
-  await app.open("/");
+  await app.open("/?variant=A");
   await expect(
     screen.getByRole("heading", "Plan a fictional weekend trail")
   ).toBeVisible();
@@ -48,7 +48,7 @@ test("completes a configured funnel and restores drafts and accepted answers", a
   await expect(browser).toHaveURL(
     "https://www.nps.gov/subjects/trails/index.htm"
   );
-  await app.open("/");
+  await app.open("/?variant=A");
   await expect(
     screen.getByRole("heading", "Your sample trail plan is ready")
   ).toBeVisible();

@@ -108,3 +108,9 @@ pnpm skills:install
 Edit `skills/` and rerun the command after changes. Installed copies in `.agents/skills` are generated and ignored; `skills-lock.json` tracks the local source. [AGENTS.md](AGENTS.md) contains the repository rules.
 
 Adapted from [joelhooks/rat-stack](https://github.com/joelhooks/rat-stack/tree/c7d11aa396dad097ecb41a3f316cc905f6037063), following its [keep-or-cut guide](https://ratstack.sh/skills/keep-or-cut). The retained capability projections, lint rules, and projection tests originate there. The MIT license is preserved.
+
+### Variant review
+
+New sessions receive A or B from the backend with a proposed equal split. The assignment is stored with the immutable version and survives Back, reload, and reopening. Open `/?variant=A` or `/?variant=B` to force a new session. An existing session keeps its assignment when the URL changes; use **Start new session** to inspect the query-selected variant. Other values are rejected with a validation message.
+
+The fictional `variants-v1.json` configures B's wording, question order, and result CTA. The proposed hypothesis is that a shorter path and clearer result CTA improve result reach per started session, the primary metric. CTA clicks per result viewer are secondary. This initial B fixture demonstrates ordering and clearer wording; a later configured iteration will shorten its route. Synthetic traffic verifies calculations and cannot establish experiment significance.

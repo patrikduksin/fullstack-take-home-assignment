@@ -19,7 +19,7 @@ test(
     yield* Test.getWhenReady(`${websiteUrl}/api/health`).pipe(Effect.orDie);
 
     const created = yield* HttpClient.post(`${websiteUrl}/api/sessions`, {
-      body: HttpBody.jsonUnsafe({}),
+      body: HttpBody.jsonUnsafe({ variant: "A" }),
     });
 
     expect(created.status).toBe(200);
@@ -87,6 +87,49 @@ test(
     expect(
       (yield* HttpClient.get(`${websiteUrl}/api/sessions/missing`)).status
     ).toBe(422);
+  }),
+  { timeout: 60_000 }
+);
+
+test(
+  "pins a forced variant and resolves its configured text and order",
+  Effect.gen(function* variantSession() {
+    const { websiteUrl } = yield* stack;
+
+    const created = yield* HttpClient.post(`${websiteUrl}/api/sessions`, {
+      body: HttpBody.jsonUnsafe({ variant: "B" }),
+    });
+
+    expect(created.status).toBe(200);
+    const initial = yield* created.json.pipe(Effect.flatMap(decodeView));
+    expect(initial.session.variant).toBe("B");
+    expect(
+      initial.configuration.steps.find((step) => step.id === "welcome")?.title
+    ).toBe("Build your weekend trail plan");
+    const url = `${websiteUrl}/api/sessions/${initial.session.id}`;
+
+    const advanced = yield* HttpClient.post(`${url}/advance`, {
+      body: HttpBody.jsonUnsafe({ answer: null }),
+    });
+
+    const next = yield* advanced.json.pipe(Effect.flatMap(decodeView));
+    expect(next.session).toMatchObject({
+      currentStep: "hours",
+      variant: "B",
+      version: initial.session.version,
+    });
+    yield* HttpClient.post(`${url}/back`, { body: HttpBody.jsonUnsafe({}) });
+
+    const restored = yield* HttpClient.get(`${url}?variant=A`).pipe(
+      Effect.flatMap((response) => response.json),
+      Effect.flatMap(decodeView)
+    );
+
+    expect(restored.session).toMatchObject({
+      currentStep: "welcome",
+      variant: "B",
+      version: initial.session.version,
+    });
   }),
   { timeout: 60_000 }
 );

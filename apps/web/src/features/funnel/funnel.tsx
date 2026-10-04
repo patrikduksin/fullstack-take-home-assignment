@@ -23,6 +23,11 @@ import { Label } from "../../components/ui/label.js";
 
 const storageKey = "funnel-session";
 
+const startSessionFromQuery = () =>
+  startSession(
+    new URLSearchParams(window.location.search).get("variant") ?? undefined
+  );
+
 const draftKey = (sessionId: string, stepId: string) =>
   `funnel-draft:${sessionId}:${stepId}`;
 
@@ -177,7 +182,7 @@ export const Funnel = () => {
 
   useEffect(() => {
     const id = localStorage.getItem(storageKey);
-    perform(id === null ? startSession() : loadSession(id));
+    perform(id === null ? startSessionFromQuery() : loadSession(id));
   }, []);
 
   const step = view?.configuration.steps.find(
@@ -206,7 +211,7 @@ export const Funnel = () => {
           variant="ghost"
           disabled={pending}
           onClick={() => {
-            perform(startSession());
+            perform(startSessionFromQuery());
           }}
         >
           Start new session
@@ -233,7 +238,9 @@ export const Funnel = () => {
                 className="mt-4"
                 onClick={() => {
                   const id = localStorage.getItem(storageKey);
-                  perform(id === null ? startSession() : loadSession(id));
+                  perform(
+                    id === null ? startSessionFromQuery() : loadSession(id)
+                  );
                 }}
               >
                 Try again

@@ -31,9 +31,11 @@ export const createSessionContract = defineContract("createSession", {
   description: "Start a funnel session pinned to the active configuration",
   failure: FunnelError,
   http: { method: "POST", path: "/sessions" },
-  input: Schema.Struct({}),
+  input: Schema.Struct({ variant: Schema.optional(Schema.String) }),
   output: SessionViewSchema,
 });
+
+export type CreateSessionInput = typeof createSessionContract.input.Type;
 
 export const loadSessionContract = defineContract("loadSession", {
   annotations: { idempotent: true, readOnly: true },
