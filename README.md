@@ -53,6 +53,8 @@ curl "$WEBSITE_URL/api/health"
 
 Connect an MCP client to `/mcp` on the reported `websiteUrl`. The server supports MCP protocol versions 2025-06-18, 2025-03-26, and 2024-11-05, including initialization and session headers.
 
+MCP requests share one Durable Object because Effect keeps these protocol sessions in memory. This keeps initialization and later tool calls on the same instance across backend Worker isolates. Sessions expire when the object restarts; clients must initialize again after a session returns 404. HTTP and RPC requests go directly to the backend Worker.
+
 ## Add assignment behavior
 
 Define input, output, and failure schemas in `packages/core/src/contracts.ts`. Implement a capability and register it in `packages/core/src/index.ts`. The backend projects the capability list into all three interfaces. Keep provider adapters in `packages/database` or another adapter package and supply their Layers in the backend.
