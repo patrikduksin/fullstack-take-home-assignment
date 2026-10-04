@@ -156,7 +156,7 @@ const enqueue = (
   type: string,
   stepId: string,
   properties: FunnelEvent["properties"]
-): FunnelEvent => {
+) => {
   const event: FunnelEvent = {
     clientTimestamp: DateTime.formatIso(DateTime.nowUnsafe()),
     // @effect-diagnostics-next-line cryptoRandomUUID:off -- Persist the native browser ID synchronously before navigation can unload the page.
@@ -174,8 +174,6 @@ const enqueue = (
     `${pendingPrefix}${event.eventId}`,
     JSON.stringify(event)
   );
-
-  return event;
 };
 
 export const recordDisplayedStep = (view: SessionView) => {
@@ -214,6 +212,35 @@ export const recordAdvance = (previous: SessionView, next: SessionView) => {
     ...properties,
     nextStepId: next.session.currentStep,
   });
+
+  for (const declaration of previous.configuration.eventTypes ?? []) {
+    if (
+      declaration.on !== "step_completed" ||
+      !declaration.stepIds.includes(step.id)
+    ) {
+      continue;
+    }
+
+    const emitted: Record<string, string | boolean> = {};
+
+    for (const [name, property] of Object.entries(declaration.properties)) {
+      if (property.kind === "step") {
+        if (property.emit === "source") {
+          emitted[name] = step.id;
+        } else if (property.emit === "target") {
+          emitted[name] = next.session.currentStep;
+        }
+      } else if (property.emit !== undefined) {
+        emitted[name] = property.emit;
+      }
+    }
+
+    if (
+      Object.keys(emitted).length === Object.keys(declaration.properties).length
+    ) {
+      enqueue(previous, declaration.type, step.id, emitted);
+    }
+  }
 };
 
 export const recordBack = (previous: SessionView, next: SessionView) => {

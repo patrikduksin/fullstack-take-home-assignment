@@ -59,7 +59,7 @@ test("publishes a local JSON file and rolls back without changing the visitor's 
   await expect(
     screen
       .getByRole("region", "Activation history")
-      .getByText(/rollback · trail-branches-v1/u)
+      .getByText(/rollback · trail-branches-v1 · previous operator-browser-v1/u)
   ).toBeVisible();
   await app.screenshot("rollback-retains-history");
   await screen.getByRole("link", "Open funnel").tap();
