@@ -86,7 +86,7 @@ The stack creates a TanStack Start website, a private backend Worker, and D1. Th
 
 ## Source
 
-Four project skills are maintained in root [`skills/`](skills): `add-a-capability`, `add-a-lifecycle-machine`, `learn-alchemy`, and `uncomplect`. They are adapted for Core from RAT stack. The reference-repo maintenance and website skills were removed.
+Five project skills are maintained in root [`skills/`](skills): `setup-core`, `add-a-capability`, `add-a-lifecycle-machine`, `learn-alchemy`, and `uncomplect`. The setup skill covers a fresh checkout; the other four are adapted for Core from RAT stack. The reference-repo maintenance and website skills were removed.
 
 After cloning, install them for Codex from their local source with the Skills CLI:
 

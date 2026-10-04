@@ -12,9 +12,9 @@ export default Alchemy.Stack(
     state: Cloudflare.state(),
   },
   Effect.gen(function* stack() {
-    yield* Backend;
+    const backend = yield* Backend;
     const website = yield* Website;
 
-    return { websiteUrl: website.url };
+    return { backendUrl: backend.url, websiteUrl: website.url };
   })
 );

@@ -14,6 +14,7 @@ Use `pnpm dev` as the sole development entrypoint. It runs Alchemy from the work
 
 Core-specific skill sources live in root `skills/`. Read the relevant skill:
 
+- [setup-core](skills/setup-core/SKILL.md) for setting up and verifying a fresh checkout.
 - [add-a-capability](skills/add-a-capability/SKILL.md) for contracts and shared HTTP/RPC/MCP handlers.
 - [add-a-lifecycle-machine](skills/add-a-lifecycle-machine/SKILL.md) for XState lifecycles with Effect actors and tests.
 - [learn-alchemy](skills/learn-alchemy/SKILL.md) for the website, backend Worker, D1, and deployment graph.

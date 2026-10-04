@@ -14,7 +14,12 @@
     "learn-alchemy": {
       "source": "./skills",
       "sourceType": "local",
-      "computedHash": "1e99f7d2b7567a60907ab75d8f9984d99d766b6ee0293ec57a76abcfd0301e28"
+      "computedHash": "a1b286927b178ece610f7979d2be004b81c95e4bd623f1bed7c8bc6c334924d0"
+    },
+    "setup-core": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "910e44f5e49fde4468f4b64b8abf22f90f85fd37995505dd2e7fedb86c9bc219"
     },
     "uncomplect": {
       "source": "./skills",
