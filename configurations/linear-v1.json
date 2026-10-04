@@ -1,0 +1,79 @@
+{
+  "id": "trail-linear-v1",
+  "name": "Trail planning",
+  "start": "welcome",
+  "steps": [
+    {
+      "id": "welcome",
+      "type": "information",
+      "title": "Plan a fictional weekend trail",
+      "body": "Answer a few questions to discover a sample trail plan. This is a demonstration, not a booking service.",
+      "next": "pace"
+    },
+    {
+      "id": "pace",
+      "type": "single-select",
+      "title": "Choose your pace",
+      "options": [
+        {
+          "id": "gentle",
+          "label": "Gentle stroll"
+        },
+        {
+          "id": "active",
+          "label": "Active hike"
+        }
+      ],
+      "next": "interests"
+    },
+    {
+      "id": "interests",
+      "type": "multi-select",
+      "title": "What would you like to see?",
+      "body": "Choose one or two interests.",
+      "options": [
+        {
+          "id": "forest",
+          "label": "Forest"
+        },
+        {
+          "id": "water",
+          "label": "Waterfalls"
+        },
+        {
+          "id": "view",
+          "label": "Mountain views"
+        }
+      ],
+      "min": 1,
+      "max": 2,
+      "next": "hours"
+    },
+    {
+      "id": "hours",
+      "type": "number",
+      "title": "How many hours do you have?",
+      "body": "Enter a number from 1 to 8.",
+      "min": 1,
+      "max": 8,
+      "next": "prepare"
+    },
+    {
+      "id": "prepare",
+      "type": "information",
+      "title": "Before you head out",
+      "body": "Bring water, check the weather, and tell someone your route. These are fictional suggestions.",
+      "next": "result"
+    },
+    {
+      "id": "result",
+      "type": "result",
+      "title": "Your sample trail plan is ready",
+      "body": "A nearby woodland loop is a good starting point for your fictional weekend.",
+      "cta": {
+        "label": "Explore trail ideas",
+        "href": "https://www.nps.gov/subjects/trails/index.htm"
+      }
+    }
+  ]
+}

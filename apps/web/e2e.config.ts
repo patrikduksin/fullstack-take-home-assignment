@@ -13,6 +13,6 @@ export default {
   retries: 0,
   targets: [{ app: { url }, engine: web(), name: "chromium" }],
   tests: "test/e2e/**/*.e2e.ts",
-  trace: "retain-on-failure",
+  trace: "on",
   workers: 1,
 } satisfies E2EConfig;

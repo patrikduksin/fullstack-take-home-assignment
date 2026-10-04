@@ -11,6 +11,10 @@
     "./contracts": {
       "types": "./src/contracts.ts",
       "import": "./src/contracts.ts"
+    },
+    "./funnel/*": {
+      "types": "./src/funnel/*.ts",
+      "import": "./src/funnel/*.ts"
     }
   },
   "scripts": {
