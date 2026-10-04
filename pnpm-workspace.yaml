@@ -1,0 +1,46 @@
+verifyDepsBeforeRun: error
+
+packages:
+  - "apps/*"
+  - "packages/*"
+
+allowBuilds:
+  esbuild: true
+  lefthook: true
+  workerd: true
+
+# Exact fresh pins that pnpm's release-age check would otherwise hold back.
+# One entry per version; a bump replaces its entry rather than adding one.
+minimumReleaseAgeExclude:
+  # Effect 4 unblock: stable runtime and adapters replace removed unstable imports.
+  - "@alchemy.run/better-auth@2.0.0-beta.80"
+  - alchemy@2.0.0-beta.80
+  - effect@4.0.0
+  - "@effect/atom-react@4.0.0"
+  - "@effect/platform-node@4.0.0"
+  - "@effect/platform-node-shared@4.0.0"
+  - "@effect/sql-pg@4.0.0"
+  - "@effect/sql-d1@4.0.0"
+  - "@effect/sql-sqlite-do@4.0.0"
+  - "@effect/vitest@4.0.0"
+  - xstate@6.0.0-alpha.63
+  - "@xstate/effect@0.1.0-alpha.6"
+  - "@distilled.cloud/aws@1.0.0-rc.13"
+  - "@distilled.cloud/axiom@1.0.0-rc.13"
+  - "@distilled.cloud/cloudflare@1.0.0-rc.13"
+  - "@distilled.cloud/core@1.0.0-rc.13"
+  - "@distilled.cloud/fly-io@1.0.0-rc.13"
+  - "@distilled.cloud/hetzner@1.0.0-rc.13"
+  - "@distilled.cloud/neon@1.0.0-rc.13"
+  - "@distilled.cloud/planetscale@1.0.0-rc.13"
+  - "@distilled.cloud/prisma@1.0.0-rc.13"
+  - "@distilled.cloud/railway@1.0.0-rc.13"
+  - "@distilled.cloud/stripe@1.0.0-rc.13"
+  - "@alchemy.run/cloudflare-runtime@2.0.0-beta.80"
+  - "@alchemy.run/floci@2.0.0-beta.80"
+  - "@alchemy.run/node-utils@2.0.0-beta.80"
+  - "@distilled.cloud/acme@1.0.0-rc.13"
+  - "@distilled.cloud/doppler@1.0.0-rc.13"
+  - "@distilled.cloud/gcp@1.0.0-rc.13"
+  - "@distilled.cloud/infisical@1.0.0-rc.13"
+  - "@distilled.cloud/zerossl@1.0.0-rc.13"

@@ -1,0 +1,15 @@
+import { implement } from "@core/capability/implement";
+import { Effect } from "effect";
+
+import { healthContract } from "./contracts.js";
+import { Database } from "./database.js";
+
+export { Database } from "./database.js";
+
+export const health = implement(healthContract, () =>
+  Database.use((database) => database.check).pipe(
+    Effect.as({ database: "ready" as const, status: "ok" as const })
+  )
+);
+
+export const capabilities = [health] as const;

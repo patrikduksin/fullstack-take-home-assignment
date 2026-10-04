@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "skills": {
+    "add-a-capability": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "f1fc8f5a51726f0e4b80deedda4d1c5a3293ca8118a2c5e0eff705b5277ebc81"
+    },
+    "add-a-lifecycle-machine": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "dbe199f76c56c7538bc807509cc32a34fb712fe16887349c1377f1525ade8cb2"
+    },
+    "learn-alchemy": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "1e99f7d2b7567a60907ab75d8f9984d99d766b6ee0293ec57a76abcfd0301e28"
+    },
+    "uncomplect": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "f0e5a0679587135ffffeb32ceeb5067b369e87e29772c79fcafe8caeecf87efe"
+    }
+  }
+}

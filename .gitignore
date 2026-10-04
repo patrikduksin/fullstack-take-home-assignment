@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.alchemy/
+.wrangler/
+.output/
+.tanstack/
+.agent_sources/
+.env
+.env.*
+*.tsbuildinfo
+apps/web/src/routeTree.gen.ts
+.agents/skills/

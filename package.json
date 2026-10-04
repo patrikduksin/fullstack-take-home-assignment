@@ -1,0 +1,54 @@
+{
+  "name": "core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Effect and Alchemy starter with a TanStack Start web app, backend, D1 database, and MCP.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "alchemy dev --config apps/infra/alchemy.run.ts",
+    "build": "pnpm -r --if-present run build",
+    "check": "pnpm typecheck && pnpm lint",
+    "typecheck": "pnpm build && pnpm -r --if-present run typecheck && pnpm typecheck-scripts",
+    "lint": "ultracite check && oxfmt --check .",
+    "fix": "ultracite fix && oxfmt .",
+    "test": "pnpm -r --if-present run test",
+    "infra:plan": "alchemy plan --config apps/infra/alchemy.run.ts",
+    "infra:deploy": "alchemy deploy --config apps/infra/alchemy.run.ts",
+    "prepare": "effect-tsgo patch && lefthook install",
+    "vendor:agent-sources": "./scripts/vendor-agent-sources.sh",
+    "typecheck-scripts": "tsc --noEmit -p tsconfig.json",
+    "skills:install": "pnpm dlx skills@1.7.0 add ./skills --agent codex --skill add-a-capability add-a-lifecycle-machine learn-alchemy uncomplect --yes"
+  },
+  "devDependencies": {
+    "@effect/tsgo": "0.45.0",
+    "@oxlint/plugins": "1.83.0",
+    "@types/node": "24.13.6",
+    "alchemy": "2.0.0-beta.80",
+    "effect": "4.0.0",
+    "lefthook": "2.1.14",
+    "oxfmt": "0.68.0",
+    "oxlint": "1.83.0",
+    "oxlint-tsgolint": "7.0.2002",
+    "typescript": "7.0.2",
+    "ultracite": "7.12.0",
+    "vitest": "5.0.1"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "11.3.0",
+      "onFail": "error"
+    },
+    "runtime": {
+      "name": "node",
+      "version": ">=24.18.0",
+      "onFail": "warn"
+    }
+  },
+  "engines": {
+    "node": ">=24.18.0",
+    "pnpm": ">=11.1.2"
+  },
+  "packageManager": "pnpm@11.3.0"
+}

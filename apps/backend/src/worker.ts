@@ -1,0 +1,26 @@
+import { d1DatabaseLayer } from "@core/database/d1";
+import * as Cloudflare from "alchemy/Cloudflare";
+import { Effect, Layer } from "effect";
+import { Etag, HttpPlatform, HttpRouter } from "effect/http";
+
+import { routes } from "./routes.js";
+
+export default class Backend extends Cloudflare.Worker<Backend>()(
+  "CoreBackend",
+  {
+    compatibility: { date: "2026-09-25" },
+    dev: { port: 3001 },
+    main: import.meta.url,
+    workersDev: false,
+  },
+  Effect.gen(function* makeBackend() {
+    const fetch = yield* HttpRouter.toHttpEffect(
+      routes.pipe(
+        Layer.provide(d1DatabaseLayer),
+        Layer.provide(Layer.merge(Etag.layerWeak, HttpPlatform.layer))
+      )
+    ).pipe(Effect.orDie);
+
+    return { fetch };
+  })
+) {}
