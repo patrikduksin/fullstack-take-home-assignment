@@ -135,6 +135,10 @@ A configuration may declare additional `eventTypes`. Declarations choose permitt
 
 For automatic completion events, set `on: "step_completed"` and provide each property's `emit`: a fixed boolean, a listed enum value, or `"source"`/`"target"` for a step reference. This lets a configuration introduce `information_acknowledged` on an information screen without hardcoding its name in the browser. Completed transition envelopes accept any configured branch or default destination, including delayed events from an earlier route revision; they are not compared with the session's current answers.
 
+The browser persists each pending envelope under `funnel-event:pending:<eventId>` in localStorage before attempting delivery. Event IDs, client timestamps, pinned metadata, and initial attribution remain unchanged across retries and reopening. An Effect fiber owned by the funnel retries pending batches of up to 20 envelopes every second with a 30-second request deadline; leaving the page interrupts that worker. Accepted and duplicate receipts remove only their captured event keys, preserving entries added during an in-flight request. Permanent rejections and corrupt records leave the pending queue and add metadata to `funnel-event:rejected`, a journal bounded to the latest 20 entries. The journal excludes event properties and answers.
+
+Accepted Continue and Back operations record their source, destination, and route revision without copying answers. Screen visits and result views record once per visit. A result CTA records synchronously before its ordinary link navigation; pending events remain available when the browser reopens.
+
 ### Reading funnel analytics
 
 Open `/internal/analytics` to filter by immutable version, A/B assignment, and initial campaign. The dashboard compares variants within separate version rows and opens each campaign cohort's steps and eligible transitions. `GET /api/analytics` accepts the same optional `version`, `variant`, and `campaign` query fields; an empty campaign selects sessions without an initial campaign.

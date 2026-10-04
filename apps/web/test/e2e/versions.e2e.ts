@@ -16,6 +16,9 @@ test("publishes a local JSON file and rolls back without changing the visitor's 
   await screen.getByRole("button", "Continue").tap();
   await screen.getByRole("radio", "Gentle stroll").check();
   await screen.getByRole("button", "Continue").tap();
+  await expect(
+    screen.getByRole("heading", "What would you like to see?")
+  ).toBeVisible();
   await screen.getByRole("link", "Manage versions").tap();
   await expect(screen.getByRole("heading", "Funnel versions")).toBeVisible();
   const active = screen.getByRole("region", "Active version");

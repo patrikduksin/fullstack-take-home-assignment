@@ -60,8 +60,11 @@ test("filters version and variant comparisons and explains eligible and empty de
   await app.screenshot("analytics-eligible-branch-denominators");
   await screen.getByLabel("Version").selectOption({ value: "" });
   await expect(starts.getByText("3")).toBeVisible();
+  await screen.getByLabel("Version").selectOption({ value: next });
+  await expect(starts.getByText("1")).toBeVisible();
   await screen.getByLabel("Initial campaign").selectOption({ value: "" });
-  await expect(starts.getByText("4")).toBeVisible();
+  await expect(starts.getByText("1")).toBeVisible();
+  await screen.getByLabel("Version").selectOption({ value: "" });
   await screen
     .getByLabel("Initial campaign")
     .selectOption({ value: JSON.stringify("other-campaign") });
