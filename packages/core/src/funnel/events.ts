@@ -1,7 +1,19 @@
 import { implement } from "@core/capability/implement";
-import { Context, DateTime, Effect, Option, Result, Schema } from "effect";
+import {
+  Context,
+  DateTime,
+  Effect,
+  Match,
+  Option,
+  Result,
+  Schema,
+} from "effect";
 
-import type { BuiltinEventType, FunnelStep } from "./configuration.js";
+import type {
+  BuiltinEventType,
+  EventDeclaration,
+  FunnelStep,
+} from "./configuration.js";
 import { BuiltinEventTypeSchema } from "./configuration.js";
 import {
   FunnelEventSchema,
@@ -99,7 +111,12 @@ const builtinEventError = (
 
   if (
     event.type === "step_completed" &&
-    event.properties.nextStepId !== step.next
+    (step.type === "result" ||
+      ![
+        step.next,
+        step.transition?.default,
+        ...(step.transition?.branches.map((branch) => branch.next) ?? []),
+      ].includes(String(event.properties.nextStepId)))
   ) {
     return "The completed transition is not configured for this step.";
   }
@@ -135,6 +152,51 @@ const builtinEventError = (
   return undefined;
 };
 
+const declaredEventError = (
+  view: SessionView,
+  event: FunnelEvent,
+  declaration: EventDeclaration
+): string | undefined => {
+  if (
+    !declaration.stepIds.some((id) => id === event.stepId) ||
+    !view.configuration.steps.some((step) => step.id === event.stepId)
+  ) {
+    return "The event step is outside this declaration's configured steps.";
+  }
+
+  if (
+    Object.keys(event.properties).some(
+      (key) => !Object.hasOwn(declaration.properties, key)
+    )
+  ) {
+    return "Custom event properties must use only their declared fields.";
+  }
+
+  for (const [name, property] of Object.entries(declaration.properties)) {
+    const value = event.properties[name];
+
+    const valid = Match.value(property).pipe(
+      Match.when({ kind: "boolean" }, () => Schema.is(Schema.Boolean)(value)),
+      Match.when({ kind: "enum" }, (descriptor) =>
+        Schema.is(Schema.Literals(descriptor.values))(value)
+      ),
+      Match.when(
+        { kind: "step" },
+        () =>
+          Schema.is(StepId)(value) &&
+          view.configuration.steps.some((step) => step.id === value)
+      ),
+      Match.exhaustive
+    );
+
+    if (!valid) {
+      return `Custom event property ${name} does not match its non-sensitive declaration.`;
+    }
+  }
+
+  return undefined;
+};
+
 const eventError = (
   view: SessionView,
   event: FunnelEvent
@@ -152,14 +214,21 @@ const eventError = (
     return "Event attribution must match the session's initial UTM fields.";
   }
 
-  if (!Schema.is(BuiltinEventTypeSchema)(event.type)) {
-    return "This event type is not declared by the pinned configuration.";
+  if (event.eventId.startsWith("session_started:")) {
+    return "Session starts are recorded by the server.";
   }
 
-  if (
-    event.type === "session_started" ||
-    event.eventId.startsWith("session_started:")
-  ) {
+  if (!Schema.is(BuiltinEventTypeSchema)(event.type)) {
+    const declaration = view.configuration.eventTypes?.find(
+      (candidate) => candidate.type === event.type
+    );
+
+    return declaration === undefined
+      ? "This event type is not declared by the pinned configuration."
+      : declaredEventError(view, event, declaration);
+  }
+
+  if (event.type === "session_started") {
     return "Session starts are recorded by the server.";
   }
 

@@ -71,3 +71,17 @@ export type { EventReceipt } from "./funnel/contracts.js";
 export { BuiltinEventTypeSchema } from "./funnel/configuration.js";
 
 export type { BuiltinEventType } from "./funnel/configuration.js";
+
+export {
+  listVersionsContract,
+  publishVersionContract,
+  rollbackVersionContract,
+  VersionError,
+  VersionStateSchema,
+} from "./funnel/version-contracts.js";
+
+export type { VersionState } from "./funnel/version-contracts.js";
+
+export { EventDeclarationSchema } from "./funnel/configuration.js";
+
+export type { EventDeclaration } from "./funnel/configuration.js";

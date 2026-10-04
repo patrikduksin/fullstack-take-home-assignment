@@ -81,7 +81,31 @@ export const funnelEvents = sqliteTable(
   ]
 );
 
+export const funnelActivations = sqliteTable(
+  "funnel_activations",
+  {
+    activatedAt: text("activated_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+    kind: text("kind").notNull(),
+    previousVersion: text("previous_version").references(
+      () => funnelVersions.version
+    ),
+    sequence: integer("sequence").primaryKey({ autoIncrement: true }),
+    version: text("version")
+      .notNull()
+      .references(() => funnelVersions.version),
+  },
+  (table) => [
+    check(
+      "funnel_activations_kind",
+      sql`${table.kind} IN ('initial', 'publish', 'rollback')`
+    ),
+  ]
+);
+
 export const schema = {
+  funnelActivations,
   funnelActive,
   funnelEvents,
   funnelSessions,
