@@ -619,25 +619,27 @@ test(
         })
       );
     } finally {
-      if (published && !restored) {
-        const current = await Effect.runPromise(state(baseUrl));
+      try {
+        if (published && !restored) {
+          const current = await Effect.runPromise(state(baseUrl));
 
-        if (current.activeVersion === configuration.id) {
-          const response = await Effect.runPromise(
-            HttpClient.post(`${baseUrl}/api/versions/rollback`, {
-              body: HttpBody.jsonUnsafe({}),
-            }).pipe(Effect.provide(FetchHttpClient.layer))
-          );
+          if (current.activeVersion === configuration.id) {
+            const response = await Effect.runPromise(
+              HttpClient.post(`${baseUrl}/api/versions/rollback`, {
+                body: HttpBody.jsonUnsafe({}),
+              }).pipe(Effect.provide(FetchHttpClient.layer))
+            );
 
-          expect(response.status).toBe(200);
+            expect(response.status).toBe(200);
+          }
         }
+      } finally {
+        await Effect.runPromise(
+          FileSystem.FileSystem.use((fs) =>
+            fs.remove(directory, { recursive: true })
+          ).pipe(Effect.provide(NodeFileSystem.layer))
+        );
       }
-
-      await Effect.runPromise(
-        FileSystem.FileSystem.use((fs) =>
-          fs.remove(directory, { recursive: true })
-        ).pipe(Effect.provide(NodeFileSystem.layer))
-      );
     }
   }
 );

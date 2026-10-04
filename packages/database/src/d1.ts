@@ -10,8 +10,8 @@ import { Effect, Layer } from "effect";
 
 import { d1FunnelAnalytics } from "./funnel-analytics.js";
 import { d1FunnelEvents } from "./funnel-events.js";
+import { d1FunnelSessions } from "./funnel-sessions.js";
 import { d1FunnelVersions } from "./funnel-versions.js";
-import { d1FunnelSessions } from "./funnel.js";
 
 export const d1DatabaseLayer = Layer.unwrap(
   Effect.gen(function* makeD1Database() {
