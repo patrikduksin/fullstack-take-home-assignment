@@ -12,7 +12,12 @@ export default {
   agents: { default: { model: chatgpt("gpt-6-luna") } },
   retries: 0,
   targets: [{ app: { url }, engine: web(), name: "chromium" }],
-  tests: "test/e2e/**/*.e2e.ts",
-  trace: "retain-on-failure",
+  tests:
+    process.env.E2E_TEST_FILE ??
+    (process.env.TRAFFIC_EXPLORE === undefined ||
+    process.env.TRAFFIC_EXPLORE === ""
+      ? ["test/e2e/**/*.e2e.ts", "!test/e2e/traffic.e2e.ts"]
+      : "test/e2e/traffic.e2e.ts"),
+  trace: "on",
   workers: 1,
 } satisfies E2EConfig;

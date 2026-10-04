@@ -1,4 +1,4 @@
-# Pre-commit fence. Cheating with --no-verify is blocked by agent hooks.
+# Local pre-commit fence. Completed tasks also run the full pnpm test suite.
 # Install: pnpm exec lefthook install (also via prepare)
 pre-commit:
   parallel: false
@@ -6,4 +6,4 @@ pre-commit:
     check:
       run: pnpm check
     test:
-      run: pnpm test
+      run: pnpm test:unit

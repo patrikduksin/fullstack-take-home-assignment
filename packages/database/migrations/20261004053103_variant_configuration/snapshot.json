@@ -1,0 +1,198 @@
+{
+  "id": "6110f372-9dc5-4a62-abb6-d73776972986",
+  "prevIds": ["bb24d0c7-1ddb-4377-8de6-661ab4524040"],
+  "version": "7",
+  "dialect": "sqlite",
+  "ddl": [
+    {
+      "name": "funnel_active",
+      "entityType": "tables"
+    },
+    {
+      "name": "funnel_sessions",
+      "entityType": "tables"
+    },
+    {
+      "name": "funnel_versions",
+      "entityType": "tables"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "singleton",
+      "entityType": "columns",
+      "table": "funnel_active"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "version",
+      "entityType": "columns",
+      "table": "funnel_active"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "CURRENT_TIMESTAMP",
+      "generated": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "table": "funnel_sessions"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "funnel_sessions"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "state",
+      "entityType": "columns",
+      "table": "funnel_sessions"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "CURRENT_TIMESTAMP",
+      "generated": null,
+      "name": "updated_at",
+      "entityType": "columns",
+      "table": "funnel_sessions"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "variant",
+      "entityType": "columns",
+      "table": "funnel_sessions"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "version",
+      "entityType": "columns",
+      "table": "funnel_sessions"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "configuration",
+      "entityType": "columns",
+      "table": "funnel_versions"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "CURRENT_TIMESTAMP",
+      "generated": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "table": "funnel_versions"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "version",
+      "entityType": "columns",
+      "table": "funnel_versions"
+    },
+    {
+      "columns": ["version"],
+      "tableTo": "funnel_versions",
+      "columnsTo": ["version"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_funnel_active_version_funnel_versions_version_fk",
+      "entityType": "fks",
+      "table": "funnel_active"
+    },
+    {
+      "columns": ["version"],
+      "tableTo": "funnel_versions",
+      "columnsTo": ["version"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_funnel_sessions_version_funnel_versions_version_fk",
+      "entityType": "fks",
+      "table": "funnel_sessions"
+    },
+    {
+      "columns": ["singleton"],
+      "nameExplicit": false,
+      "name": "funnel_active_pk",
+      "table": "funnel_active",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "funnel_sessions_pk",
+      "table": "funnel_sessions",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["version"],
+      "nameExplicit": false,
+      "name": "funnel_versions_pk",
+      "table": "funnel_versions",
+      "entityType": "pks"
+    },
+    {
+      "value": "\"singleton\" = 1",
+      "name": "funnel_active_singleton",
+      "entityType": "checks",
+      "table": "funnel_active"
+    },
+    {
+      "value": "json_valid(\"state\")",
+      "name": "funnel_sessions_state_json",
+      "entityType": "checks",
+      "table": "funnel_sessions"
+    },
+    {
+      "value": "\"variant\" IN ('A', 'B')",
+      "name": "funnel_sessions_variant",
+      "entityType": "checks",
+      "table": "funnel_sessions"
+    },
+    {
+      "value": "json_valid(\"configuration\")",
+      "name": "funnel_versions_configuration_json",
+      "entityType": "checks",
+      "table": "funnel_versions"
+    }
+  ],
+  "renames": []
+}

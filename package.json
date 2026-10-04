@@ -11,7 +11,7 @@
     "typecheck": "pnpm -r --if-present run typecheck && pnpm typecheck-scripts",
     "lint": "ultracite check && oxfmt --check .",
     "fix": "ultracite fix && oxfmt .",
-    "test": "pnpm test:unit && pnpm test:integration && pnpm test:e2e",
+    "test": "pnpm test:unit && bash scripts/test-remote.sh",
     "infra:plan": "alchemy plan --config apps/infra/alchemy.run.ts",
     "infra:deploy": "alchemy deploy --config apps/infra/alchemy.run.ts",
     "prepare": "effect-tsgo patch && lefthook install",
@@ -20,7 +20,8 @@
     "skills:install": "pnpm dlx skills@1.7.0 add ./skills --agent codex --skill setup testing add-a-capability add-a-lifecycle-machine learn-alchemy uncomplect --yes",
     "test:unit": "pnpm -r --if-present run test",
     "test:integration": "pnpm -r --if-present run test:integration",
-    "test:e2e": "pnpm -r --if-present run test:e2e"
+    "test:e2e": "pnpm -r --if-present run test:e2e",
+    "traffic": "tsx scripts/funnel-traffic.ts"
   },
   "devDependencies": {
     "@ai-sdk/openai": "4.0.83",
@@ -39,6 +40,7 @@
     "oxlint": "1.83.0",
     "oxlint-tsgolint": "7.0.2002",
     "playwright": "1.63.0",
+    "tsx": "4.23.15",
     "typescript": "7.0.2",
     "ultracite": "7.12.0",
     "vitest": "5.0.1"

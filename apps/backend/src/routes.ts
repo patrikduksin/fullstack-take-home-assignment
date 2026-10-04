@@ -22,20 +22,21 @@ export const routes = Layer.mergeAll(
     group: rpc.group,
     path: "/rpc",
     protocol: "http",
-  }).pipe(Layer.provide(rpc.layer), Layer.provide(RpcSerialization.layerJson)),
-  McpServer.toolkit(tools.toolkit).pipe(
-    Layer.provide(tools.layer),
-    Layer.provide(
-      McpServer.layerHttp({
-        name: "core",
-        path: "/mcp",
-        protocols: [
-          McpProtocol.v2025_06_18,
-          McpProtocol.v2025_03_26,
-          McpProtocol.v2024_11_05,
-        ],
-        version: "0.1.0",
-      })
-    )
+  }).pipe(Layer.provide(rpc.layer), Layer.provide(RpcSerialization.layerJson))
+);
+
+export const mcpRoutes = McpServer.toolkit(tools.toolkit).pipe(
+  Layer.provide(tools.layer),
+  Layer.provide(
+    McpServer.layerHttp({
+      name: "core",
+      path: "/mcp",
+      protocols: [
+        McpProtocol.v2025_06_18,
+        McpProtocol.v2025_03_26,
+        McpProtocol.v2024_11_05,
+      ],
+      version: "0.1.0",
+    })
   )
 );

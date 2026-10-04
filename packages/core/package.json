@@ -11,10 +11,15 @@
     "./contracts": {
       "types": "./src/contracts.ts",
       "import": "./src/contracts.ts"
+    },
+    "./funnel/*": {
+      "types": "./src/funnel/*.ts",
+      "import": "./src/funnel/*.ts"
     }
   },
   "scripts": {
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run test"
   },
   "dependencies": {
     "@core/capability": "workspace:*",
@@ -23,7 +28,9 @@
     "xstate": "6.0.0-alpha.63"
   },
   "devDependencies": {
+    "@effect/vitest": "4.0.0",
     "@types/node": "24.13.6",
-    "typescript": "7.0.2"
+    "typescript": "7.0.2",
+    "vitest": "5.0.1"
   }
 }
