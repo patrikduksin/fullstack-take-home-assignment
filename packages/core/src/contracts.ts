@@ -36,6 +36,7 @@ export type {
 
 export {
   AnswerSchema,
+  ConfigurationInvalid,
   FunnelConfigurationSchema,
   FunnelStepSchema,
 } from "./funnel/configuration.js";

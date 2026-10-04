@@ -14,6 +14,7 @@ import type {
   FunnelSession,
   SessionView,
 } from "./contracts.js";
+import { pruneAnswers } from "./route.js";
 
 export class FunnelSessions extends Context.Service<
   FunnelSessions,
@@ -22,7 +23,10 @@ export class FunnelSessions extends Context.Service<
       input: CreateSessionInput
     ) => Effect.Effect<SessionView, FunnelError>;
     readonly load: (id: string) => Effect.Effect<SessionView, FunnelError>;
-    readonly save: (session: FunnelSession) => Effect.Effect<void, FunnelError>;
+    readonly save: (
+      session: FunnelSession,
+      expectedCurrentStep: string
+    ) => Effect.Effect<void, FunnelError>;
   }
 >()("@core/core/funnel/FunnelSessions") {}
 
@@ -50,9 +54,16 @@ const loadSession = implement(loadSessionContract, ({ id }) =>
 
 const advanceSession = implement(
   advanceSessionContract,
-  Effect.fn("advanceSession")(function* advanceSession({ id, answer }) {
+  Effect.fn("advanceSession")(function* advanceSession({ id, answer, stepId }) {
     const sessions = yield* FunnelSessions;
     const view = yield* sessions.load(id);
+
+    if (stepId !== view.session.currentStep || !view.route.includes(stepId)) {
+      return yield* new FunnelError({
+        message:
+          "That step is no longer available. Reload your session before continuing.",
+      });
+    }
 
     const step = view.configuration.steps.find(
       (candidate) => candidate.id === view.session.currentStep
@@ -70,23 +81,42 @@ const advanceSession = implement(
       return yield* new FunnelError({ message });
     }
 
-    if (step.next === undefined) {
-      return yield* new FunnelError({ message: "There is no next step." });
+    const submitted =
+      step.type === "information"
+        ? view.session.answers
+        : { ...view.session.answers, [step.id]: answer };
+
+    const { answers, route } = pruneAnswers(view.configuration, submitted);
+    const destination = route[route.indexOf(step.id) + 1];
+
+    if (destination === undefined) {
+      return yield* new FunnelError({
+        message: "There is no eligible next step.",
+      });
     }
+
+    const eligible = new Set(route);
+
+    const routeChanged =
+      route.length !== view.route.length ||
+      route.some((eligibleId, index) => eligibleId !== view.route[index]);
 
     const session: FunnelSession = {
       ...view.session,
-      answers:
-        step.type === "information"
-          ? view.session.answers
-          : { ...view.session.answers, [step.id]: answer },
-      currentStep: step.next,
-      history: [...view.session.history, step.id],
+      answers,
+      currentStep: destination,
+      history: [
+        ...view.session.history.filter((eligibleId) =>
+          eligible.has(eligibleId)
+        ),
+        step.id,
+      ],
+      routeRevision: view.session.routeRevision + (routeChanged ? 1 : 0),
     };
 
-    yield* sessions.save(session);
+    yield* sessions.save(session, stepId);
 
-    return { ...view, session };
+    return { ...view, route, session };
   })
 );
 
@@ -109,7 +139,7 @@ const backSession = implement(
       history: view.session.history.slice(0, -1),
     };
 
-    yield* sessions.save(session);
+    yield* sessions.save(session, view.session.currentStep);
 
     return { ...view, session };
   })

@@ -1,6 +1,11 @@
-import { FunnelError, SessionViewSchema } from "@core/core/contracts";
+import {
+  FunnelError,
+  FunnelConfigurationSchema,
+  FunnelSessionSchema,
+} from "@core/core/contracts";
 import type { CreateSessionInput, FunnelSession } from "@core/core/contracts";
 import { resolveVariant } from "@core/core/funnel/configuration";
+import { resolveRoute } from "@core/core/funnel/route";
 import { FunnelSessions } from "@core/core/funnel/session";
 import type * as Cloudflare from "alchemy/Cloudflare";
 import * as RuntimeContext from "alchemy/RuntimeContext";
@@ -41,7 +46,12 @@ export const d1FunnelSessions = (
     }
 
     const view = yield* Schema.decodeEffect(
-      Schema.fromJsonString(SessionViewSchema)
+      Schema.fromJsonString(
+        Schema.Struct({
+          configuration: FunnelConfigurationSchema,
+          session: FunnelSessionSchema,
+        })
+      )
     )(row.view).pipe(
       Effect.mapError(
         () =>
@@ -49,9 +59,15 @@ export const d1FunnelSessions = (
       )
     );
 
+    const configuration = resolveVariant(
+      view.configuration,
+      view.session.variant
+    );
+
     return {
       ...view,
-      configuration: resolveVariant(view.configuration, view.session.variant),
+      configuration,
+      route: resolveRoute(configuration, view.session.answers),
     };
   });
 
@@ -79,18 +95,25 @@ export const d1FunnelSessions = (
     return yield* load(row.id);
   });
 
-  const save = Effect.fn("FunnelSessions.save")(function* save(
-    session: FunnelSession
-  ) {
-    yield* stored(
-      database
-        .prepare(
-          "UPDATE funnel_sessions SET state = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?"
+  const save = Effect.fn("FunnelSessions.save")(
+    (session: FunnelSession, expectedCurrentStep: string) =>
+      stored(
+        database
+          .prepare(
+            "UPDATE funnel_sessions SET state = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND json_extract(state, '$.currentStep') = ?"
+          )
+          .bind(JSON.stringify(session), session.id, expectedCurrentStep)
+          .run()
+      ).pipe(
+        Effect.flatMap((changed) =>
+          changed.meta.changes === 1
+            ? Effect.void
+            : new FunnelError({
+                message: "Your session changed. Reload it before continuing.",
+              })
         )
-        .bind(JSON.stringify(session), session.id)
-        .run()
-    );
-  });
+      )
+  );
 
   return FunnelSessions.of({ create, load, save });
 };

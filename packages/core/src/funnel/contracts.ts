@@ -45,6 +45,7 @@ export type FunnelSession = typeof FunnelSessionSchema.Type;
 
 export const SessionViewSchema = Schema.Struct({
   configuration: FunnelConfigurationSchema,
+  route: Schema.Array(Schema.String),
   session: FunnelSessionSchema,
 });
 
@@ -71,7 +72,11 @@ export const advanceSessionContract = defineContract("advanceSession", {
   description: "Validate the current answer and advance the funnel",
   failure: FunnelError,
   http: { method: "POST", path: "/sessions/:id/advance" },
-  input: Schema.Struct({ answer: AnswerSchema, id: Schema.String }),
+  input: Schema.Struct({
+    answer: AnswerSchema,
+    id: Schema.String,
+    stepId: Schema.String,
+  }),
   output: SessionViewSchema,
 });
 
